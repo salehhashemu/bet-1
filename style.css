@@ -1,0 +1,672 @@
+/* ================= ۱. بازنشانی و تم پایه‌ای کهکشانی ================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background: radial-gradient(circle at center, #1a1c29 0%, #0e1017 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #ffffff;
+    padding: 15px;
+}
+
+/* کانتینر اختصاصی گوشی هوشمند */
+.mobile-container, .login-container {
+    width: 100%;
+    max-width: 440px;
+    background: rgba(20, 22, 37, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(15px);
+    border-radius: 20px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* ================= ۲. بازطراحی کهکشانی و مینیمال صفحه ورود ================= */
+/* ================= اصلاح موقعیت و ظاهر صفحه ورود ================= */
+
+/* گارانتی سنتر و وسط‌چین شدن کامل کانتینر در موبایل و دسکتاپ */
+body.login-page {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-height: 100vh !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 15px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important; /* جلوگیری از اسکرول خوردن‌های آزاردهنده در موبایل */
+}
+
+.login-container {
+    position: relative;
+    width: 100%;
+    max-width: 400px; /* اندازه استاندارد و شیک برای گوشی */
+    padding: 45px 30px;
+    text-align: center;
+    background: rgba(15, 18, 36, 0.5) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    backdrop-filter: blur(25px) !important;
+    border-radius: 24px !important;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), 0 0 80px rgba(0, 149, 255, 0.03) !important;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+}
+
+.glow-sphere {
+    position: absolute;
+    top: -40px;
+    left: -40px;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(0, 149, 255, 0.12) 0%, transparent 70%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+.brand-icon {
+    font-size: 38px;
+    margin-bottom: 12px;
+    filter: drop-shadow(0 0 10px rgba(0, 149, 255, 0.3));
+}
+
+.login-header h2 {
+    font-size: 21px !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    margin-bottom: 8px !important;
+}
+
+.login-header p {
+    color: #717784 !important;
+    font-size: 13px !important;
+    margin-bottom: 35px !important;
+    line-height: 1.5;
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 25px !important;
+}
+
+/* تنظیم ظاهر فیلد متنی رمز عبورِ آشکار */
+.input-group input {
+    width: 100%;
+    padding: 16px 20px !important;
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    color: #0095ff !important; /* تغییر رنگ متن رمز به آبی روشن جذاب جهت خوانایی عالی */
+    font-size: 17px !important;
+    font-weight: 600 !important;
+    outline: none;
+    transition: all 0.3s ease !important;
+    text-align: center;
+    direction: ltr !important; /* نوشتن انگلیسی یا عددی منظم تر */
+}
+
+.input-group input:focus {
+    background: rgba(0, 149, 255, 0.02) !important;
+    border-color: #0095ff !important;
+    box-shadow: 0 0 20px rgba(0, 149, 255, 0.12) !important;
+}
+
+.input-group label {
+    position: absolute;
+    right: 50%;
+    top: 50%;
+    transform: translate(50%, -50%);
+    color: #626977 !important;
+    font-size: 13px !important;
+    pointer-events: none;
+    white-space: nowrap;
+    transition: all 0.25s ease !important;
+}
+
+/* انیمیشن رفتن لیبل به بالا به شکل کامپوننت‌های مدرن گوگل */
+.input-group input:focus ~ label,
+.input-group input:not(:placeholder-shown) ~ label {
+    top: 0% !important;
+    right: 15px !important;
+    transform: translate(0%, -50%) !important;
+    font-size: 11px !important;
+    color: #0095ff !important;
+    background: #0f1224 !important;
+    padding: 2px 8px !important;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.btn-submit {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px !important;
+    background: linear-gradient(135deg, #0052d4 0%, #4364f7 50%, #6fb1fc 100%) !important;
+    border: none !important;
+    border-radius: 12px !important;
+    color: #fff !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 6px 20px rgba(67, 100, 247, 0.25) !important;
+}
+
+.btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(67, 100, 247, 0.4) !important;
+}
+
+.btn-icon {
+    font-size: 14px;
+    transition: transform 0.3s ease;
+}
+
+.btn-submit:hover .btn-icon {
+    transform: translateX(-3px) scale(1.15);
+}
+
+.login-footer {
+    margin-top: 25px !important;
+}
+
+.forgot-link {
+    color: #5c6270 !important;
+    text-decoration: none;
+    font-size: 12px !important;
+    transition: color 0.2s !important;
+}
+
+.forgot-link:hover {
+    color: #0095ff !important;
+}
+
+/* ================= مودال بازیابی اختصاصی ورود ================= */
+.modal-content {
+    background: #0c0e1a !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    padding: 35px 25px !important;
+    border-radius: 20px !important;
+}
+
+.telegram-link {
+    display: inline-block;
+    margin-top: 10px;
+    background: rgba(0, 149, 255, 0.06) !important;
+    color: #0095ff !important;
+    border: 1px solid rgba(0, 149, 255, 0.15) !important;
+    padding: 10px 22px !important;
+    border-radius: 10px !important;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.telegram-link:hover {
+    background: #0095ff !important;
+    color: #fff !important;
+    box-shadow: 0 0 15px rgba(0, 149, 255, 0.3);
+}
+
+.btn-close {
+    margin-top: 15px;
+    background: transparent !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    color: #5c6270 !important;
+    padding: 10px 24px !important;
+    border-radius: 10px !important;
+    font-size: 12px !important;
+}
+
+.btn-close:hover {
+    background: rgba(255, 255, 255, 0.02) !important;
+    color: #fff !important;
+}
+
+/* ================= ۳. هدر و فریم داشبورد ================= */
+.app-header {
+    background: rgba(255, 255, 255, 0.02);
+    padding: 18px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.app-header h1 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #0095ff;
+    text-shadow: 0 0 10px rgba(0, 149, 255, 0.3);
+}
+
+.btn-logout-icon {
+    background: rgba(255, 59, 48, 0.1);
+    border: 1px solid rgba(255, 59, 48, 0.2);
+    font-size: 15px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #ff3b30;
+    transition: all 0.2s;
+}
+.btn-logout-icon:hover { background: #ff3b30; color: #fff; }
+
+.app-content {
+    padding: 15px;
+    overflow-y: auto;
+}
+
+/* ================= ۴. باکس‌ها و فرم‌های مدیریت ================= */
+.card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 18px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.section-title {
+    font-size: 14px;
+    margin-bottom: 16px;
+    color: #e2e8f0;
+    border-right: 3px solid #0095ff;
+    padding-right: 10px;
+    font-weight: 600;
+}
+
+.mobile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* اصلاح چسبندگی فیلدهای افزودن بازی جدید */
+.match-creator-box h4 {
+    font-size: 13px;
+    color: #ffcc00;
+    margin-bottom: 12px;
+}
+.match-creator-box {
+    margin-top: 20px; 
+    border-top: 1px solid rgba(255,255,255,0.08); 
+    padding-top: 15px;
+}
+.form-group-spacing {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* ایجاد فاصله استاندارد و زیبا بین المان‌ها */
+}
+
+input[type="text"], select {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 14px;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 13px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+input[type="text"]:focus, select:focus {
+    border-color: #0095ff;
+    background: rgba(0, 149, 255, 0.04);
+}
+select option { background: #161925; color: #fff; }
+
+button {
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+.btn-primary {
+    background: linear-gradient(135deg, #0095ff 0%, #0066ff 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(0, 149, 255, 0.2);
+}
+.btn-success {
+    background: linear-gradient(135deg, #00c853 0%, #00b248 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(0, 200, 83, 0.2);
+}
+
+/* ================= ۵. لیست کاربران و تیم‌ها ================= */
+.user-mobile-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 12px 14px;
+    border-radius: 12px;
+    margin-top: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.user-info .u-name { font-weight: 600; font-size: 14px; color: #ffffff; display: block; }
+.user-info .u-pass { font-size: 11px; color: #0095ff; margin-top: 4px; display: block; }
+
+.action-icons-group { display: flex; gap: 8px; }
+.btn-icon-edit { background: rgba(255, 204, 0, 0.1); color: #ffcc00; border: 1px solid rgba(255, 204, 0, 0.2); padding: 6px 12px; border-radius: 8px; font-size: 11px; }
+.btn-icon-delete { background: rgba(255, 59, 48, 0.1); color: #ff3b30; border: 1px solid rgba(255, 59, 48, 0.2); padding: 6px 12px; border-radius: 8px; font-size: 11px; }
+
+.chips-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.team-chip { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); color: #e2e8f0; padding: 6px 14px; border-radius: 30px; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+.btn-chip-delete { color: #ff3b30; font-weight: bold; cursor: pointer; font-size: 14px; }
+
+/* ================= ۶. بخش پوشه‌ها و مسابقات (به همراه فیلد نتایج زنده) ================= */
+.folder-box {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 14px;
+    margin-bottom: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.folder-header {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.folder-title { font-weight: 600; font-size: 14px; color: #ffcc00; }
+
+.match-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.03);
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.match-teams {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.team-name {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+}
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+/* استایل فیلد ثبت آنی نتایج مسابقات (مخصوص ادمین) */
+.admin-score-inputs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+}
+.score-input {
+    width: 36px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    color: #fff;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    outline: none;
+    -moz-appearance: textfield;
+}
+.score-input::-webkit-outer-spin-button,
+.score-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.score-input:focus {
+    border-color: #00c853;
+    background: rgba(0, 200, 83, 0.05);
+}
+
+/* استایل نمایش نتایج مسابقات (مخصوص کاربر عادی) */
+.user-score-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+}
+.score-num {
+    font-size: 15px;
+    font-weight: bold;
+    color: #ffcc00;
+}
+.score-dash {
+    color: #8a8f98;
+    font-size: 14px;
+}
+
+.match-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.02);
+    padding-top: 8px;
+}
+.match-time-tag {
+    background: rgba(0, 149, 255, 0.1);
+    color: #0095ff;
+    border: 1px solid rgba(0, 149, 255, 0.2);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: bold;
+}
+.btn-match-del { color: #ff3b30; cursor: pointer; font-size: 12px; opacity: 0.7; }
+
+/* ================= ۷. پاپ‌آپ‌ها ================= */
+.modal {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);
+    justify-content: center; align-items: center; z-index: 1000;
+}
+.modal-content {
+    background: #161925; border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 30px; border-radius: 16px; text-align: center; max-width: 350px; width: 90%;
+    animation: fadeIn 0.3s ease forwards;
+}
+.modal-content h3 { color: #0095ff; margin-bottom: 15px; }
+.modal-content p { font-size: 14px; color: #8a8f98; margin-bottom: 20px; }
+.telegram-link { display: inline-block; direction: ltr; background: rgba(0, 149, 255, 0.1); color: #0095ff; padding: 10px 20px; border-radius: 30px; text-decoration: none; font-weight: bold; font-size: 18px; margin-bottom: 20px; border: 1px solid rgba(0, 149, 255, 0.2); }
+.btn-close { background: transparent; border: 1px solid rgba(255, 255, 255, 0.2); color: #8a8f98; padding: 8px 20px; border-radius: 6px; cursor: pointer; }
+@keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+/* ================= استایل دکمه‌های جدید ثبت و ویرایش نتایج مسابقه ================= */
+.score-action-zone {
+    display: flex;
+    align-items: center;
+}
+
+.btn-score-submit {
+    background: linear-gradient(135deg, #00c853 0%, #00b248 100%);
+    color: #fff;
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    box-shadow: 0 3px 10px rgba(0, 200, 83, 0.2);
+}
+
+.btn-score-edit {
+    background: rgba(0, 149, 255, 0.1);
+    color: #0095ff;
+    border: 1px solid rgba(0, 149, 255, 0.25);
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 6px;
+}
+.btn-score-edit:hover {
+    background: #0095ff;
+    color: #fff;
+}
+
+/* وقتی اینپوت قفل (disabled) است، ظاهرش تاریک‌تر و شکیل‌تر بماند */
+.score-input:disabled {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.05);
+    color: #ffcc00; /* رنگ نئون طلایی برای نتایج نهایی ثبت شده */
+    cursor: not-allowed;
+}
+
+/* ================= استایل جدید دکمه خروج در سمت چپ ================= */
+.app-header {
+    display: flex;
+    justify-content: space-between; /* فرستادن عنوان به راست و دکمه به چپ */
+    align-items: center;
+    padding: 10px 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 15px;
+}
+
+.btn-logout-text {
+    background: rgba(255, 59, 48, 0.1);
+    color: #ff3b30;
+    border: 1px solid rgba(255, 59, 48, 0.2);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-logout-text:hover {
+    background: #ff3b30;
+    color: #fff;
+    box-shadow: 0 0 12px rgba(255, 59, 48, 0.4);
+}
+
+/* ================= استایل دکمه جدید نتایج در هدر ================= */
+.header-right-side {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* ایجاد فاصله استاندارد بین عنوان پنل و دکمه نتایج */
+}
+
+.btn-results-nav {
+    background: rgba(0, 149, 255, 0.1) !important;
+    color: #0095ff !important;
+    border: 1px solid rgba(0, 149, 255, 0.25) !important;
+    padding: 6px 14px !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.btn-results-nav:hover {
+    background: linear-gradient(135deg, #0095ff 0%, #0066ff 100%) !important;
+    color: #fff !important;
+    box-shadow: 0 0 12px rgba(0, 149, 255, 0.45) !important;
+    border-color: transparent !important;
+    transform: translateY(-1px);
+}
+
+.btn-results-nav:active {
+    transform: translateY(1px);
+}
+
+/* ================= استایل جدید اینپوت‌های تاریخ و ساعت اختصاصی ادمین ================= */
+.custom-datetime-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 10px 12px !important;
+    border-radius: 10px !important;
+    color: #0095ff !important;
+    font-size: 12px !important;
+    outline: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.custom-datetime-input:focus {
+    border-color: #0095ff !important;
+    background: rgba(0, 149, 255, 0.04) !important;
+    box-shadow: 0 0 10px rgba(0, 149, 255, 0.2);
+}
+
+/* بهینه‌سازی تگ نمایش زمان مسابقه */
+.match-time-tag {
+    background: rgba(0, 149, 255, 0.06) !important;
+    color: #0095ff !important;
+    border: 1px solid rgba(0, 149, 255, 0.15) !important;
+    padding: 5px 12px !important;
+    border-radius: 8px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    direction: ltr; /* مرتب شدن چیدمان آیکون و عدد انگلیسی */
+}
+
+/* ================= استایل اختصاصی بازی‌های پیش‌بینی نشده ================= */
+.match-item.not-predicted {
+    background: rgba(0, 149, 255, 0.03) !important; /* پس‌زمینه متمایز آبی بسیار ملایم */
+    border-right: 4px solid #0095ff !important; /* خط راهنمای عمودی در سمت راست باکس بازی */
+    border-top: 1px solid rgba(0, 149, 255, 0.15) !important;
+    border-bottom: 1px solid rgba(0, 149, 255, 0.15) !important;
+    box-shadow: inset 0 0 15px rgba(0, 149, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+/* تغییر رنگ ملایم اینپوت‌های پیش‌بینی نشده برای جلب توجه کاربر */
+.match-item.not-predicted .score-input {
+    border-color: rgba(0, 149, 255, 0.4) !important;
+    background: rgba(0, 149, 255, 0.08) !important;
+    animation: pulseGlow 2s infinite alternate; /* انیمیشن نبض ملایم برای ترغیب به ثبت */
+}
+
+@keyframes pulseGlow {
+    from {
+        box-shadow: 0 0 4px rgba(0, 149, 255, 0.1);
+    }
+    to {
+        box-shadow: 0 0 10px rgba(0, 149, 255, 0.3);
+    }
+}
+
+/* استایل فوق‌العاده شیک و کهکشانی برای نشان کاربر پریمیوم */
+.premium-badge {
+    background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+    color: #000000 !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    padding: 3px 8px !important;
+    border-radius: 50px !important;
+    margin-right: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    text-shadow: none !important;
+    animation: premiumGlow 1.5s infinite alternate;
+}
+
+@keyframes premiumGlow {
+    0% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.3); }
+    100% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.7); }
+}

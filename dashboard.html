@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>پیش‌بینی جام جهانی 2026</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <div class="mobile-container">
+        
+        <header class="app-header">
+    <div class="header-right-side">
+        <h1 id="welcomeMessage">بارگذاری...</h1>
+        <button id="globalResultsBtn" class="btn-results-nav">📊 نتایج</button>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+        <button id="usersLastVisitBtn" class="btn-results-nav" style="background: #2a2d34; color: #fff;">کاربران</button>
+        <button id="logoutBtn" class="btn-logout-text">خروج</button>
+    </div>
+</header>
+
+        <main class="app-content">
+            
+            <!-- ================= پنل مدیریت کل ================= -->
+<div class="admin-only">
+    
+    <!-- بخش اول: مدیریت کاربران -->
+    <section class="card">
+        <h3 class="section-title">👥 مدیریت کاربران سیستم</h3>
+        <div class="mobile-form">
+            <input type="text" id="newUsername" placeholder="نام کاربر">
+            <input type="text" id="newUserPassword" placeholder="رمز عبور کاربر">
+            <button id="addUserBtn" class="btn-primary">＋ افزودن کاربر</button>
+        </div>
+        <div class="list-wrapper" id="userListWrapper"></div>
+    </section>
+
+    <!-- بخش دوم: مدیریت تیم‌ها -->
+    <section class="card">
+        <h3 class="section-title">⚽ مدیریت تیم‌های جام جهانی</h3>
+        <div class="mobile-form">
+            <input type="text" id="teamNameInput" placeholder="نام تیم (مثلاً: برزیل)">
+            <button id="addTeamBtn" class="btn-primary">＋ ثبت تیم</button>
+        </div>
+        <div class="chips-container" id="teamsContainer"></div>
+    </section>
+
+    <!-- بخش سوم: مدیریت پوشه‌ها و بازی‌ها -->
+    <section class="card">
+        <h3 class="section-title">📁 دسته‌بندی و تعریف بازی‌ها</h3>
+        <div class="mobile-form">
+            <input type="text" id="folderNameInput" placeholder="نام پوشه جدید (مثلاً: یک‌چهارم)">
+            <button id="addFolderBtn" class="btn-primary">＋ ساخت پوشه</button>
+        </div>
+        
+        <!-- فرم افزودن بازی - فیلدهای تاریخ و ساعت اضافه شدند -->
+        <div class="match-creator-box">
+            <h4>➕ افزودن بازی جدید</h4>
+            <div class="form-group-spacing">
+                <select id="matchFolderSelect"><option value="">انتخاب پوشه...</option></select>
+                <select id="matchHomeSelect"><option value="">تیم میزبان...</option></select>
+                <select id="matchAwaySelect"><option value="">تیم میهمان...</option></select>
+                
+                <!-- فیلدهای جدید تاریخ و ساعت با استایل هماهنگ -->
+                <div class="datetime-row-inputs" style="display: flex; gap: 10px;">
+                    <input type="date" id="matchDateInput" class="custom-datetime-input" title="تاریخ بازی">
+                    <input type="time" id="matchTimeInput" class="custom-datetime-input" title="ساعت بازی">
+                </div>
+                
+                <button id="addMatchBtn" class="btn-success">ثبت بازی در پوشه</button>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<section class="card" id="lastVisitSection" style="display: none; margin-bottom: 20px;">
+    <h3 class="section-title">🕒 تاریخچه آخرین بازدید کاربران</h3>
+    <div class="list-wrapper" id="lastVisitListWrapper">در حال بارگذاری...</div>
+</section>
+<!-- ================= پنل نمایش بازی‌ها ================= -->
+<section class="card">
+    <h3 class="section-title">🏆 پوشه‌ها و بازی‌های جام جهانی 2026</h3>
+    <div id="displayFoldersContainer"></div>
+</section>
+
+        </main>
+    </div>
+
+<script src="rewardRegistration.js"></script>
+<script src="winnerAnnouncer.js?v=2.0"></script>
+<script src="dashboard.js"></script>
+<script src="navigation.js"></script>
+</body>
+</html>

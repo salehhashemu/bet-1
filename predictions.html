@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=no">
+    <title>جدول رتبه‌بندی و نتایج پیش‌بینی‌ها</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        @media (min-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .leaderboard-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+        .leaderboard-row.top-user {
+            border-color: #ffcc00;
+            background: rgba(255, 204, 0, 0.03);
+        }
+        .rank-badge {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-size: 12px;
+            font-weight: bold;
+            background: rgba(255,255,255,0.1);
+        }
+        .rank-1 { background: #ffcc00; color: #000; }
+        .rank-2 { background: #e2e8f0; color: #000; }
+        .rank-3 { background: #cd7f32; color: #000; }
+
+        .user-clickable-row {
+            cursor: pointer;
+            padding: 14px;
+            background: rgba(0, 149, 255, 0.02);
+            border: 1px solid rgba(0, 149, 255, 0.1);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+        .user-clickable-row:hover {
+            background: rgba(0, 149, 255, 0.08);
+            border-color: #0095ff;
+        }
+        
+        .user-pred-wrapper {
+            margin-bottom: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .user-pred-content {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+        }
+
+        .sub-folder-toggle-btn {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 204, 0, 0.04);
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #ffcc00;
+            font-weight: 600;
+            border-radius: 8px;
+            margin: 8px 0 4px 0;
+            border: 1px solid rgba(255, 204, 0, 0.1);
+            border-right: 3px solid #ffcc00;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .sub-folder-toggle-btn:hover {
+            background: rgba(255, 204, 0, 0.08);
+        }
+        .sub-match-list {
+            padding: 2px 5px;
+            border-right: 1px dashed rgba(255, 204, 0, 0.1);
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="mobile-container" style="max-width: 900px;">
+        <header class="app-header">
+            <div class="header-right-side">
+                <h1 style="color: #ffcc00; font-size: 16px;">📊 جدول نتایج و رتبه‌بندی کل</h1>
+            </div>
+            <button onclick="window.location.href='dashboard.html'" class="btn-results-nav">🔙 بازگشت به پنل</button>
+        </header>
+
+        <main class="app-content">
+            <div class="results-grid">
+                
+                <!-- ستون اول: رتبه‌بندی کاربران -->
+                <section class="card">
+                    <h3 class="section-title">🏆 جدول رتبه‌بندی بر اساس امتیازات</h3>
+                    <div id="leaderboardContainer">
+                        <p style="text-align:center; color:#8a8f98; padding: 20px;">در حال محاسبه امتیازات...</p>
+                    </div>
+                </section>
+
+                <!-- ستون دوم: پیش‌بینی دیگر کاربران -->
+                <section class="card">
+                    <h3 class="section-title">🔍 بررسی پیش‌بینی کاربران</h3>
+                    <div id="usersPredictionsContainer">
+                        <p style="text-align:center; color:#8a8f98; padding: 20px;">در حال بارگذاری لیست کاربران...</p>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://rzvuvrfrkbsthzzimbce.supabase.co"; 
+        const SUPABASE_KEY = "sb_publishable_La0ndqo_3bHPHl-HKXtkBw_aZ74Kip2";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const currentLoggedInUser = localStorage.getItem('loggedInUser') || '';
+        
+        let openedUsers = [];
+        let openedUserFolders = []; 
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const userRole = localStorage.getItem('userRole');
+            const loggedInUser = localStorage.getItem('loggedInUser');
+            if (!userRole || !loggedInUser) {
+                window.location.href = 'index.html';
+                return;
+            }
+            initResultsPage();
+        });
+
+        async function initResultsPage() {
+            try {
+                const { data: users } = await supabaseClient.from('project_users').select('username');
+                const { data: matches } = await supabaseClient.from('matches').select('*');
+                const { data: teams } = await supabaseClient.from('teams').select('*');
+                const { data: folders } = await supabaseClient.from('folders').select('*').order('id', {ascending: true});
+                const { data: allPredictions } = await supabaseClient.from('predictions').select('*');
+
+                const teamsMap = {};
+                teams?.forEach(t => { teamsMap[t.id] = t.name; });
+
+                // به دست آوردن تعداد کل مسابقات موجود در سیستم
+                const totalMatchesCount = matches ? matches.length : 0;
+
+                const userScores = {};
+                const userPredictionsCount = {}; // آرایه مپ شمارش تعداد پیش‌بینی‌های ثبت شده هر کاربر
+                
+                users?.forEach(u => { 
+                    userScores[u.username] = 0; 
+                    userPredictionsCount[u.username] = 0;
+                });
+
+                // شمارش دقیق تعداد پیش‌بینی‌های معتبر و فعال ثبت شده توسط هر کاربر در سیستم
+allPredictions?.forEach(pred => {
+    if (userPredictionsCount[pred.username] !== undefined) {
+        
+        // ۱. بررسی اینکه آیا بازیِ این پیش‌بینی هنوز در سیستم وجود دارد یا حذف شده؟
+        const targetMatchExists = matches?.some(m => String(m.id) === String(pred.match_id));
+        
+        if (targetMatchExists) {
+            // ۲. بررسی اینکه کاربر واقعاً عددی وارد کرده باشد و فیلدها خالی یا null نباشند
+            const prH = pred.home_prediction;
+            const prA = pred.away_prediction;
+            
+            if (prH !== null && prH !== undefined && prH !== "" &&
+                prA !== null && prA !== undefined && prA !== "") {
+                
+                userPredictionsCount[pred.username] += 1;
+            }
+        }
+    }
+});
+
+                // منطق هوشمند محاسبه امتیازات مسابقات
+                allPredictions?.forEach(pred => {
+    // 🌟 شرط جدید: بررسی اینکه آیا این نام کاربری اصلاً در لیست کاربران فعلی سیستم هست یا خیر
+    const userExists = users?.some(u => u.username === pred.username);
+    if (!userExists) return; // اگر کاربر حذف شده باشد، از این پیش‌بینی صرف نظر کن
+
+    const match = matches?.find(m => String(m.id) === String(pred.match_id));
+    // ... بقیه کدهای مربوط به محاسبه امتیاز بدون تغییر باقی می‌ماند
+                    
+                    if (match && match.home_score !== null && match.away_score !== null && match.home_score !== undefined && match.away_score !== undefined) {
+                        
+                        const prH = parseInt(pred.home_prediction); 
+                        const prA = parseInt(pred.away_prediction); 
+                        const reH = parseInt(match.home_score);     
+                        const reA = parseInt(match.away_score);     
+
+                        if (!isNaN(prH) && !isNaN(prA) && !isNaN(reH) && !isNaN(reA)) {
+                            
+                            if (userScores[pred.username] === undefined) {
+                                userScores[pred.username] = 0;
+                            }
+
+                            let realWinner = 0;
+                            if (reH > reA) realWinner = 1;
+                            else if (reA > reH) realWinner = 2;
+
+                            let predWinner = 0;
+                            if (prH > prA) predWinner = 1;
+                            else if (prA > prH) predWinner = 2;
+
+                            const realDiff = reH - reA;
+                            const predDiff = prH - prA;
+
+                            if (prH === reH && prA === reA) {
+                                userScores[pred.username] += 10;
+                            } 
+                            else if (realWinner === predWinner && realDiff === predDiff) {
+                                userScores[pred.username] += 7;
+                            } 
+                            else if (realWinner === predWinner) {
+                                userScores[pred.username] += 5;
+                            } 
+                            else {
+                                userScores[pred.username] += 2;
+                            }
+                        }
+                    }
+                });
+
+                // ساخت ساختار خروجی جدول امتیاز دهی به همراه شمارنده پیش‌بینی‌ها
+                const leaderboardArray = Object.keys(userScores).map(username => {
+                    return { 
+                        username: username, 
+                        score: userScores[username],
+                        predCount: userPredictionsCount[username] || 0
+                    };
+                }).sort((a, b) => b.score - a.score);
+
+                // رندر رتبه‌بندی کاربران
+                const leaderboardContainer = document.getElementById('leaderboardContainer');
+                leaderboardContainer.innerHTML = '';
+                
+                leaderboardArray.forEach((item, index) => {
+                    const rank = index + 1;
+                    let rankClass = rank <= 3 ? `rank-${rank}` : '';
+                    const isMe = item.username === currentLoggedInUser ? 'top-user' : '';
+
+                    const row = document.createElement('div');
+                    row.className = `leaderboard-row ${isMe}`;
+                    row.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span class="rank-badge ${rankClass}">${rank}</span>
+                            <div style="display:flex; flex-direction:column; gap:2px;">
+                                <span style="font-weight: ${isMe ? 'bold' : '500'}; color: ${isMe ? '#ffcc00' : '#fff'};">
+                                    ${item.username} ${isMe ? ' (شما)' : ''}
+                                </span>
+                                <span style="font-size:10px; color:#8a8f98;">
+                                    📊 ${item.predCount} از ${totalMatchesCount} پیش‌بینی
+                                </span>
+                            </div>
+                        </div>
+                        <div style="font-weight: bold; color: #0095ff;">${item.score} امتیاز</div>
+                    `;
+                    leaderboardContainer.appendChild(row);
+                });
+
+                // رندر بخش بررسی پیش‌بینی کاربران
+                const usersContainer = document.getElementById('usersPredictionsContainer');
+                usersContainer.innerHTML = '';
+
+                if (!users || users.length === 0) {
+                    usersContainer.innerHTML = '<p style="text-align:center; color:#8a8f98;">کاربری یافت نشد.</p>';
+                    return;
+                }
+
+                users.forEach(u => {
+                    const isExpanded = openedUsers.includes(u.username);
+                    const userWrapper = document.createElement('div');
+                    userWrapper.className = 'user-pred-wrapper';
+
+                    const userHeader = document.createElement('div');
+                    userHeader.className = 'user-clickable-row';
+                    userHeader.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span>👤 ${u.username}</span>
+                        </div>
+                        <button class="btn-score-edit" style="padding: 4px 10px; font-size:11px; min-width: 95px;">
+                            ${isExpanded ? '🙈 مخفی‌سازی' : '📂 پوشه نتایج'}
+                        </button>
+                    `;
+                    
+                    userHeader.addEventListener('click', () => { toggleUserAccordion(u.username); });
+                    userWrapper.appendChild(userHeader);
+
+                    if (isExpanded) {
+                        const contentDiv = document.createElement('div');
+                        contentDiv.className = 'user-pred-content';
+
+                        const userPreds = allPredictions?.filter(p => p.username === u.username) || [];
+
+                        folders?.forEach(folder => {
+                            const folderMatches = matches?.filter(m => String(m.folder_id) === String(folder.id)) || [];
+                            
+                            if (folderMatches.length > 0) {
+                                const folderKey = `${u.username}_${folder.id}`;
+                                const isFolderOpen = openedUserFolders.includes(folderKey);
+
+                                const folderBtn = document.createElement('div');
+                                folderBtn.className = 'sub-folder-toggle-btn';
+                                folderBtn.innerHTML = `
+                                    <span>📁 ${folder.name}</span>
+                                    <span style="font-size: 11px; background: rgba(255,204,0,0.1); padding: 2px 8px; border-radius: 4px;">
+                                        ${isFolderOpen ? '🙈 مخفی کردن بازی‌ها' : '👁️ مشاهده بازی‌ها'}
+                                    </span>
+                                `;
+
+                                folderBtn.addEventListener('click', (e) => {
+                                    e.stopPropagation();
+                                    toggleFolderAccordion(folderKey);
+                                });
+
+                                contentDiv.appendChild(folderBtn);
+
+                                if (isFolderOpen) {
+                                    const matchListContainer = document.createElement('div');
+                                    matchListContainer.className = 'sub-match-list';
+
+                                    folderMatches.forEach(match => {
+                                        const pred = userPreds.find(p => String(p.match_id) === String(match.id));
+                                        
+                                        const homeName = teamsMap[match.team_home_id] || 'تیم اول';
+                                        const awayName = teamsMap[match.team_away_id] || 'تیم دوم';
+                                        const realHome = (match.home_score !== null && match.home_score !== undefined) ? match.home_score : '-';
+                                        const realAway = (match.away_score !== null && match.away_score !== undefined) ? match.away_score : '-';
+
+                                        let predBadge = '';
+                                        if (pred) {
+                                            predBadge = `<span style="color:#0095ff; font-weight:bold; background:rgba(0,149,255,0.08); padding:2px 8px; border-radius:4px;">پیش‌بینی: ${pred.home_prediction} - ${pred.away_prediction}</span>`;
+                                        } else {
+                                            predBadge = `<span style="color:#ff3b30; font-weight:bold; background:rgba(255,59,48,0.08); padding:2px 8px; border-radius:4px; font-size:11px;">⚠️ پیش‌بینی نکرده</span>`;
+                                        }
+
+                                        const matchRow = document.createElement('div');
+                                        matchRow.className = 'match-item';
+                                        matchRow.style = "background: rgba(255,255,255,0.01); margin: 5px 0; border-radius:8px; padding: 10px; border-top: 1px solid rgba(255,255,255,0.02);";
+                                        matchRow.innerHTML = `
+                                            <div class="match-teams" style="font-size:12px; display:flex; justify-content:space-between; align-items:center;">
+                                                <span style="flex:1; text-align:left;">${homeName}</span>
+                                                <div style="flex:1.5; display:flex; flex-direction:column; align-items:center; gap:2px;">
+                                                    ${predBadge}
+                                                    <span style="color:#8a8f98; font-size:10px;">واقعی: ${realHome} - ${realAway}</span>
+                                                </div>
+                                                <span style="flex:1; text-align:right;">${awayName}</span>
+                                            </div>
+                                        `;
+                                        matchListContainer.appendChild(matchRow);
+                                    });
+
+                                    contentDiv.appendChild(matchListContainer);
+                                }
+                            }
+                        });
+                        userWrapper.appendChild(contentDiv);
+                    }
+
+                    usersContainer.appendChild(userWrapper);
+                });
+
+            } catch (err) {
+                console.error("Error loading results:", err);
+            }
+        }
+
+        function toggleUserAccordion(username) {
+            if (openedUsers.includes(username)) {
+                openedUsers = openedUsers.filter(u => u !== username);
+                openedUserFolders = openedUserFolders.filter(key => !key.startsWith(`${username}_`));
+            } else {
+                openedUsers.push(username);
+            }
+            initResultsPage();
+        }
+
+        function toggleFolderAccordion(folderKey) {
+            if (openedUserFolders.includes(folderKey)) {
+                openedUserFolders = openedUserFolders.filter(k => k !== folderKey);
+            } else {
+                openedUserFolders.push(folderKey);
+            }
+            initResultsPage();
+        }
+    </script>
+</body>
+</html>
