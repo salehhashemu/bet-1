@@ -1,31 +1,28 @@
-// تنظیمات اختصاصی دیتابیس پروژه عظیم شما در ریجن توکیو
-const SUPABASE_URL = "https://rzvuvrfrkbsthzzimbce.supabase.co"; 
+// ==========================================
+// تنظیمات اتصال به دیتابیس
+// ==========================================
+const SUPABASE_URL = "https://rzvuvrfrkbsthzzimbce.supabase.co";
 const SUPABASE_KEY = "sb_publishable_La0ndqo_3bHPHl-HKXtkBw_aZ74Kip2";
-
-// راه‌اندازی کلاینت سوبابیس
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 document.addEventListener('DOMContentLoaded', () => {
-    // ⭐ بخش جدید: بررسی لاگین خودکار (Remember Me Auto-Login)
+
+    // ⭐ بررسی لاگین خودکار
     const userRole = localStorage.getItem('userRole');
     const loggedInUser = localStorage.getItem('loggedInUser');
-    
-    // اگر کاربر قبلاً وارد شده باشد، بدون نمایش فرم مستقیماً هدایت می‌شود
+
     if (userRole && loggedInUser) {
         window.location.href = 'dashboard.html';
-        return; // توقف اجرای بقیه کدها
+        return;
     }
 
     const loginForm = document.getElementById('loginForm');
-    // در همان فایل script.js شما
-const passwordInput = document.getElementById('password');
-// بقیه کدهای قبلی بدون تغییر اجرا می‌شوند...
-    
+    const passwordInput = document.getElementById('password');
     const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
     const forgotModal = document.getElementById('forgotModal');
     const closeModalBtn = document.getElementById('closeModalBtn');
 
-    // ۱. بررسی فرآیند ورود (بدون تأخیر و با مانیتورینگ خطا)
+    // فرآیند ورود
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const passwordValue = passwordInput.value.trim();
@@ -36,7 +33,7 @@ const passwordInput = document.getElementById('password');
             return;
         }
 
-        // بررسی رمز عبور مدیرکل (مستقل از دیتابیس کار می‌کند)
+        // بررسی رمز ادمین
         if (passwordValue === ADMIN_PASSWORD) {
             localStorage.setItem('userRole', 'admin');
             localStorage.setItem('loggedInUser', 'مدیرکل');
@@ -44,21 +41,19 @@ const passwordInput = document.getElementById('password');
             return;
         }
 
-        // استعلام آنی از جدول دیتابیس پروژه شما
+        // استعلام از دیتابیس
         try {
             const { data, error } = await supabaseClient
                 .from('project_users')
                 .select('username')
                 .eq('password', passwordValue);
 
-            // اگر خطایی در ساختار اتصال یا نام جدول رخ دهد
             if (error) {
                 console.error("Supabase Error:", error);
                 alert("خطا در پاسخ دیتابیس: " + error.message);
                 return;
             }
 
-            // اگر کاربری با این رمز پیدا شد
             if (data && data.length > 0) {
                 localStorage.setItem('userRole', 'user');
                 localStorage.setItem('loggedInUser', data[0].username);
@@ -73,7 +68,7 @@ const passwordInput = document.getElementById('password');
         }
     });
 
-    // ۲. مدیریت بخش فراموشی رمز عبور (کاملاً مقاوم در برابر قفل شدن)
+    // مدیریت مودال فراموشی رمز عبور
     forgotPasswordBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
