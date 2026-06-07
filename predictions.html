@@ -262,6 +262,13 @@
                 const { data: teams }          = await supabaseClient.from('teams').select('*');
                 const { data: folders }        = await supabaseClient.from('folders').select('*').order('id', { ascending: true });
                 const { data: allPredictions } = await supabaseClient.from('predictions').select('*');
+                // فچ کاربران پریمیوم (شرکت‌کننده در چالش مالی)
+                const { data: premiumUsers }   = await supabaseClient
+                    .from('project_users')
+                    .select('username')
+                    .eq('is_eligible_for_reward', true);
+
+                const premiumSet = new Set((premiumUsers || []).map(p => p.username));
 
                 const teamsMap = {};
                 teams?.forEach(t => { teamsMap[t.id] = t.name; });
@@ -319,6 +326,11 @@
                     const rank = index + 1;
                     const rankClass = rank <= 3 ? `rank-${rank}` : '';
                     const isMe = item.username === currentLoggedInUser;
+                    const isPremium = premiumSet.has(item.username);
+
+                    const premiumBadgeHtml = isPremium
+                        ? `<span class="premium-badge">💎 چالش</span>`
+                        : '';
 
                     const row = document.createElement('div');
                     row.className = `lb-row${isMe ? ' is-me' : ''}`;
@@ -327,8 +339,11 @@
                         <div class="lb-left">
                             <div class="rank-badge ${rankClass}">${rank}</div>
                             <div class="lb-meta">
-                                <span class="lb-name${isMe ? ' is-me' : ''}">${item.username}${isMe ? ' — شما' : ''}</span>
-                                <span class="lb-sub">${item.predCount} از ${totalMatchesCount} پیش‌بینی ثبت‌شده</span>
+                                <span class="lb-name${isMe ? ' is-me' : ''}" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+                                    ${item.username}${isMe ? ' — شما' : ''}
+                                    ${premiumBadgeHtml}
+                                </span>
+                                <span class="lb-sub">${item.predCount} از ${totalMatchesCount} پیش‌بینی</span>
                             </div>
                         </div>
                         <div class="lb-score">${item.score}</div>

@@ -334,9 +334,9 @@ window.toggleEditScore = (matchId) => {
     const userRole = localStorage.getItem('userRole');
     if (actionBtnZone) {
         if (userRole === 'admin') {
-            actionBtnZone.innerHTML = `<button class="btn-score-submit" onclick="saveScore(${matchId})">💾 ذخیره تغییرات</button>`;
+            actionBtnZone.innerHTML = `<button class="btn-score-submit" onclick="saveScore(${matchId})">ذخیره نتیجه</button>`;
         } else {
-            actionBtnZone.innerHTML = `<button class="btn-score-submit" onclick="saveUserPrediction(${matchId})">💾 ذخیره تغییرات پیش‌بینی</button>`;
+            actionBtnZone.innerHTML = `<button class="btn-score-submit" onclick="saveUserPrediction(${matchId})">ذخیره پیش‌بینی</button>`;
         }
     }
 };
@@ -438,7 +438,9 @@ async function fetchAndRenderContent() {
                     ? `<div class="match-time-tag">📅 ${match.match_date} | ⏰ ${match.match_time}</div>`
                     : `<div class="match-time-tag">زمان نامشخص</div>`;
 
-                const delMatchBtn = userRole === 'admin' ? `<span class="btn-match-del" onclick="deleteMatch(${match.id})">🗑️ حذف بازی</span>` : '';
+                const delMatchBtn = userRole === 'admin'
+                    ? `<button class="btn-match-del" onclick="deleteMatch(${match.id})">حذف</button>`
+                    : '';
 
                 let scoreSection = '';
                 let actionBtnZone = '';
@@ -448,52 +450,56 @@ async function fetchAndRenderContent() {
                         <div style="display:flex; flex-direction:column; align-items:center; gap:4px; width:100%;">
                             <div class="admin-score-inputs">
                                 <input type="number" id="home-input-${match.id}" class="score-input" value="${match.home_score !== null ? match.home_score : ''}" placeholder="0" disabled>
-                                <span class="score-dash" style="color:#ffcc00;">-</span>
+                                <span class="score-dash">—</span>
                                 <input type="number" id="away-input-${match.id}" class="score-input" value="${match.away_score !== null ? match.away_score : ''}" placeholder="0" disabled>
                             </div>
-                            <span style="font-size:10px; color:#ffcc00; opacity:0.8;">نتیجه واقعی دیتابیس</span>
+                            <span style="font-size:10px; color:var(--gold); opacity:0.7; margin-top:2px;">نتیجه ثبت‌شده</span>
                         </div>
                     `;
                     actionBtnZone = `
                         <div class="score-action-zone" id="action-zone-${match.id}">
-                            <button class="btn-score-edit" onclick="toggleEditScore(${match.id})">✏️ ثبت/ویرایش نتیجه</button>
+                            <button class="btn-score-edit" onclick="toggleEditScore(${match.id})">ویرایش نتیجه</button>
                         </div>
                     `;
                 } else {
                     scoreSection = `
                         <div style="display:flex; flex-direction:column; align-items:center; gap:8px; width:100%;">
-                            <div style="background:rgba(255,204,0,0.05); border:1px dashed rgba(255,204,0,0.2); padding:4px 12px; border-radius:8px;">
-                                <span style="font-size:11px; color:#ffcc00; display:block; text-align:center; margin-bottom:2px;">نتیجه واقعی</span>
-                                <div style="display:flex; justify-content:center; align-items:center; gap:6px;">
-                                    <span class="score-num" style="color:#ffcc00;">${realHome}</span>
-                                    <span class="score-dash" style="color:#ffcc00;">:</span>
-                                    <span class="score-num" style="color:#ffcc00;">${realAway}</span>
+                            <div style="background:var(--gold-dim); border:1px dashed rgba(240,192,64,0.2); padding:5px 14px; border-radius:8px;">
+                                <span style="font-size:10px; color:var(--gold); display:block; text-align:center; margin-bottom:3px; opacity:0.8;">نتیجه واقعی</span>
+                                <div style="display:flex; justify-content:center; align-items:center; gap:8px;">
+                                    <span class="score-num">${realHome}</span>
+                                    <span style="color:var(--text-muted); font-size:12px;">–</span>
+                                    <span class="score-num">${realAway}</span>
                                 </div>
                             </div>
-                            <div class="admin-score-inputs" style="margin-top:4px;">
+                            <div class="admin-score-inputs" style="margin-top:2px;">
                                 <input type="number" id="home-input-${match.id}" class="score-input" value="${predHome}" placeholder="0"
-                                    ${(hasPrediction || isTimeExpired) ? 'disabled' : ''} style="border-color:rgba(0,149,255,0.3); color:#0095ff;">
-                                <span class="score-dash" style="color:#0095ff;">-</span>
+                                    ${(hasPrediction || isTimeExpired) ? 'disabled' : ''}
+                                    style="border-color:rgba(99,133,255,0.35); color:var(--accent);">
+                                <span class="score-dash">–</span>
                                 <input type="number" id="away-input-${match.id}" class="score-input" value="${predAway}" placeholder="0"
-                                    ${(hasPrediction || isTimeExpired) ? 'disabled' : ''} style="border-color:rgba(0,149,255,0.3); color:#0095ff;">
+                                    ${(hasPrediction || isTimeExpired) ? 'disabled' : ''}
+                                    style="border-color:rgba(99,133,255,0.35); color:var(--accent);">
                             </div>
-                            <span style="font-size:10px; color:#0095ff; opacity:0.8;">پیش‌بینی شما</span>
+                            <span style="font-size:10px; color:var(--accent); opacity:0.7;">پیش‌بینی شما</span>
                         </div>
                     `;
 
                     if (isTimeExpired) {
                         actionBtnZone = `
                             <div class="score-action-zone" id="action-zone-${match.id}">
-                                <button class="btn-score-edit" disabled style="background:#2a2d34; color:#8a8f98; border:1px solid #3a3f47; cursor:not-allowed;">🔒 زمان پایان یافت</button>
+                                <button class="btn-score-edit" disabled
+                                    style="background:var(--bg-elevated); color:var(--text-muted); border-color:var(--border-subtle); cursor:not-allowed; opacity:0.6;">
+                                    🔒 قفل شد
+                                </button>
                             </div>
                         `;
                     } else {
-                        // ✅ BUG FIX: قبلاً match.id = matchId نوشته شده بود که یک تخصیص اشتباه بود
                         actionBtnZone = `
                             <div class="score-action-zone" id="action-zone-${match.id}">
                                 ${hasPrediction
-                                    ? `<button class="btn-score-edit" onclick="toggleEditScore(${match.id})" style="background:rgba(0,149,255,0.1); color:#0095ff; border:1px solid rgba(0,149,255,0.2);">✏️ ویرایش پیش‌بینی</button>`
-                                    : `<button class="btn-score-submit" onclick="saveUserPrediction(${match.id})" style="background:linear-gradient(135deg,#0052d4 0%,#0095ff 100%);">🎯 ثبت پیش‌بینی</button>`
+                                    ? `<button class="btn-score-edit" onclick="toggleEditScore(${match.id})">ویرایش</button>`
+                                    : `<button class="btn-score-submit" onclick="saveUserPrediction(${match.id})">ثبت پیش‌بینی</button>`
                                 }
                             </div>
                         `;
