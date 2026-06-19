@@ -327,51 +327,53 @@
                 return;
             }
 
-            var reH = parseInt(match.home_score), reA = parseInt(match.away_score);
-            var rW = reH > reA ? 1 : reA > reH ? 2 : 0;
-            var homeName = d.teamsMap[match.team_home_id] || '—';
-            var awayName = d.teamsMap[match.team_away_id] || '—';
+            // ─── بازی‌های تعیین‌شده به ترتیب، و بازی‌های تا پایان بازی انتخاب‌شده ───
+            var settledOrdered = d.matches.filter(function(m) {
+                return m.home_score !== null && m.away_score !== null;
+            }).sort(function(a, b) { return Number(a.id) - Number(b.id); });
+            var gameIndex = settledOrdered.findIndex(function(m) { return String(m.id) === String(matchId); });
+            var upToMatches = settledOrdered.slice(0, gameIndex + 1);
+            var gameNumber = gameIndex + 1;
 
+            // ─── محاسبه امتیاز تجمعی هر کاربر تا پایان این بازی ───
             var rows = d.users.map(function(u) {
-                var pred = d.scoreIdx[u.username + '_' + String(matchId)];
-                if (!pred) return { username: u.username, pts: null, predStr: null };
-                var prH = parseInt(pred.home_prediction), prA = parseInt(pred.away_prediction);
-                if (isNaN(prH) || isNaN(prA)) return { username: u.username, pts: null, predStr: null };
-                var pW = prH > prA ? 1 : prA > prH ? 2 : 0;
-                var pts;
-                if (prH === reH && prA === reA) pts = 10;
-                else if (rW === pW && (reH - reA) === (prH - prA)) pts = 7;
-                else if (rW === pW) pts = 5;
-                else pts = 2;
-                return { username: u.username, pts: pts, predStr: prH + ' – ' + prA };
-            }).sort(function(a, b) {
-                if (b.pts === null && a.pts === null) return 0;
-                if (b.pts === null) return -1;
-                if (a.pts === null) return 1;
-                return b.pts - a.pts;
-            });
-
-            var ptsCssMap = {10:'color:var(--green)', 7:'color:var(--accent)', 5:'color:var(--gold)', 2:'color:var(--text-secondary)'};
+                var cum = 0;
+                var predictedCount = 0;
+                upToMatches.forEach(function(m) {
+                    var pred = d.scoreIdx[u.username + '_' + String(m.id)];
+                    if (!pred) return;
+                    var prH = parseInt(pred.home_prediction), prA = parseInt(pred.away_prediction);
+                    if (isNaN(prH) || isNaN(prA)) return;
+                    var reH = parseInt(m.home_score), reA = parseInt(m.away_score);
+                    var rW = reH > reA ? 1 : reA > reH ? 2 : 0;
+                    var pW = prH > prA ? 1 : prA > prH ? 2 : 0;
+                    if (prH === reH && prA === reA) cum += 10;
+                    else if (rW === pW && (reH - reA) === (prH - prA)) cum += 7;
+                    else if (rW === pW) cum += 5;
+                    else cum += 2;
+                    predictedCount++;
+                });
+                return { username: u.username, score: cum, predictedCount: predictedCount };
+            }).sort(function(a, b) { return b.score - a.score; });
 
             lbEl.innerHTML =
                 '<div style="background:var(--gold-dim);border:1px dashed rgba(240,192,64,0.25);border-radius:10px;padding:10px 14px;margin-bottom:12px;text-align:center;font-size:12px;color:var(--gold);">' +
-                    'نتیجه واقعی: <strong>' + homeName + ' ' + reH + ' – ' + reA + ' ' + awayName + '</strong>' +
+                    'امتیاز تجمعی تا پایان <strong>بازی ' + gameNumber + '</strong>' +
                 '</div>' +
                 rows.map(function(r, i) {
                     var rank = i + 1;
                     var rc = rank <= 3 ? 'rank-' + rank : '';
                     var isMe = r.username === d.currentLoggedInUser;
-                    var ptsCss = r.pts !== null ? (ptsCssMap[r.pts] || 'color:var(--text-muted)') : 'color:var(--text-muted)';
                     return '<div class="lb-row' + (isMe ? ' is-me' : '') + '" style="animation-delay:' + (i*0.04) + 's">' +
                         '<div class="lb-left">' +
                             '<div class="rank-badge ' + rc + '">' + rank + '</div>' +
                             '<div class="lb-meta">' +
                                 '<span class="lb-name' + (isMe ? ' is-me' : '') + '">' + r.username + '</span>' +
-                                '<span class="lb-sub">' + (r.predStr ? 'پیش‌بینی: ' + r.predStr : '❌ پیش‌بینی نکرده') + '</span>' +
+                                '<span class="lb-sub">' + r.predictedCount + ' از ' + gameNumber + ' پیش‌بینی</span>' +
                             '</div>' +
                         '</div>' +
                         '<div class="lb-right">' +
-                            '<div class="lb-score" style="' + ptsCss + '">' + (r.pts !== null ? r.pts + ' امتیاز' : '—') + '</div>' +
+                            '<div class="lb-score">' + r.score + '</div>' +
                         '</div>' +
                     '</div>';
                 }).join('');
@@ -664,13 +666,11 @@
                     perMatchBtns.innerHTML = '';
                     var settledForBtns = matches.filter(function(m) { return m.home_score !== null && m.away_score !== null; });
                     settledForBtns.forEach(function(m, idx) {
-                        var hName = teamsMap[m.team_home_id] || '—';
-                        var aName = teamsMap[m.team_away_id] || '—';
                         var btn = document.createElement('button');
                         btn.id = 'btnRankM' + m.id;
                         btn.className = 'match-rank-btn';
-                        btn.style.cssText = 'padding:5px 11px;border-radius:20px;border:1px solid var(--border-subtle);background:var(--bg-elevated);color:var(--text-muted);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap;';
-                        btn.textContent = 'بازی ' + (idx + 1) + ': ' + hName + ' – ' + aName;
+                        btn.style.cssText = 'padding:5px 13px;border-radius:20px;border:1px solid var(--border-subtle);background:var(--bg-elevated);color:var(--text-muted);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;';
+                        btn.textContent = 'بازی ' + (idx + 1);
                         btn.setAttribute('onclick', 'showMatchRanking("' + m.id + '")');
                         perMatchBtns.appendChild(btn);
                     });

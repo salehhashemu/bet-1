@@ -191,32 +191,33 @@ function renderRewardBox(userStatus) {
     const toggleBtnId = 'rewardBoxToggleBtn';
 
     rewardBox.innerHTML = `
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:${expired || isChecked ? '10px' : '0'};">
+        <div style="margin-bottom:${expired || isChecked ? '10px' : '0'};">
             <div class="reward-title" style="margin-bottom:0;"><span>🎁 طرح بزرگ جایزه و چالش مالی مسابقات</span></div>
-            ${expired || isChecked ? `
+        </div>
+        ${noticeHtml}
+        ${expired || isChecked ? `
+        <div style="display:flex;justify-content:center;margin-bottom:12px;">
             <button id="${toggleBtnId}" onclick="(function(){
                 var d=document.getElementById('${detailsId}');
                 var b=document.getElementById('${toggleBtnId}');
                 var open=d.style.display==='block';
                 d.style.display=open?'none':'block';
-                b.innerHTML=open?'<span style=\\'margin-left:5px;\\'>جزئیات</span><span style=\\'font-size:10px;\\'>▾</span>':'<span style=\\'margin-left:5px;\\'>بستن</span><span style=\\'font-size:10px;\\'>▴</span>';
+                b.innerHTML=open?'<span style=\\'margin-left:4px;\\'>جزئیات</span><span style=\\'font-size:9px;\\'>▾</span>':'<span style=\\'margin-left:4px;\\'>بستن</span><span style=\\'font-size:9px;\\'>▴</span>';
             })()" style="
-                display:inline-flex;align-items:center;gap:4px;
-                font-size:11px;font-weight:700;
-                padding:6px 14px;
+                display:inline-flex;align-items:center;gap:3px;
+                font-size:10px;font-weight:700;
+                padding:4px 12px;
                 border-radius:20px;
                 border:1px solid rgba(99,133,255,0.25);
                 background:rgba(99,133,255,0.08);
                 color:#6385ff;
                 cursor:pointer;
                 font-family:var(--font,inherit);
-                flex-shrink:0;
                 transition:all 0.18s;
             " onmouseover="this.style.background='rgba(99,133,255,0.16)'" onmouseout="this.style.background='rgba(99,133,255,0.08)'">
-                <span style="margin-left:5px;">جزئیات</span><span style="font-size:10px;">▾</span>
-            </button>` : ''}
-        </div>
-        ${noticeHtml}
+                <span style="margin-left:4px;">جزئیات</span><span style="font-size:9px;">▾</span>
+            </button>
+        </div>` : ''}
         <div id="${detailsId}" style="display:${expired || isChecked ? 'none' : 'block'};">
             <p class="reward-law-text">
                 <b>قانون مسابقه:</b> در صورت فعال‌سازی این تیک، شما مشمول دریافت جایزه بزرگ مسابقات (در صورت اول شدن) خواهید بود.
