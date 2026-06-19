@@ -69,7 +69,7 @@
             font-size: 13px; font-weight: 800;
         }
         .score-table-header.h10 { background: rgba(52,211,153,0.15); color: var(--green); border: 1px solid rgba(52,211,153,0.25); }
-        .score-table-header.h7  { background: rgba(99,133,255,0.15); color: var(--accent); border: 1px solid rgba(99,133,255,0.25); }
+        .score-table-header.h7  { background: rgba(255,59,78,0.15); color: var(--accent); border: 1px solid rgba(255,59,78,0.25); }
         .score-table-header.h5  { background: rgba(240,192,64,0.15); color: var(--gold); border: 1px solid rgba(240,192,64,0.25); }
         .score-table-header.h2  { background: rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid var(--border-subtle); }
         .score-table-header.hnp { background: rgba(248,113,113,0.12); color: var(--red); border: 1px solid rgba(248,113,113,0.25); }
@@ -129,7 +129,7 @@
         .copycat-sort-btn.active {
             background: var(--accent-dim);
             color: var(--accent);
-            border-color: rgba(99,133,255,0.35);
+            border-color: rgba(255,59,78,0.35);
         }
         .copycat-pair {
             border: 1px solid var(--border-subtle);
@@ -147,7 +147,7 @@
         .copycat-badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
         .copycat-count-badge {
             font-size: 11px; font-weight: 800; color: var(--accent);
-            background: rgba(99,133,255,0.12); border: 1px solid rgba(99,133,255,0.25);
+            background: rgba(255,59,78,0.12); border: 1px solid rgba(255,59,78,0.25);
             padding: 3px 9px; border-radius: 20px; white-space: nowrap;
         }
         .copycat-rate-badge {
@@ -177,7 +177,7 @@
             white-space: nowrap; background: rgba(255,255,255,0.05); border: 1px solid var(--border-subtle);
         }
         .copycat-pts-badge.pts10 { color: var(--green); background: rgba(52,211,153,0.12); border-color: rgba(52,211,153,0.25); }
-        .copycat-pts-badge.pts7  { color: var(--accent); background: rgba(99,133,255,0.12); border-color: rgba(99,133,255,0.25); }
+        .copycat-pts-badge.pts7  { color: var(--accent); background: rgba(255,59,78,0.12); border-color: rgba(255,59,78,0.25); }
         .copycat-pts-badge.pts5  { color: var(--gold); background: rgba(240,192,64,0.12); border-color: rgba(240,192,64,0.25); }
         .copycat-pts-badge.pts2  { color: var(--text-secondary); }
         .copycat-pts-badge.pending { color: var(--text-muted); }
@@ -304,7 +304,7 @@ const ME = localStorage.getItem('loggedInUser') || '';
 // رنگ کاربران
 // ══════════════════════════════════════════
 const PALETTE = [
-    '#6385ff','#34d399','#f0c040','#f87171','#a78bfa',
+    '#ff3b4e','#34d399','#f0c040','#f87171','#a78bfa',
     '#fb923c','#38bdf8','#f472b6','#4ade80','#facc15',
     '#e879f9','#2dd4bf','#fb7185','#60a5fa','#c084fc',
     '#fbbf24','#00e5cc','#94a3b8'
@@ -993,7 +993,7 @@ function buildDailyCompareUI() {
         const isActive = _dailyCompareUser===u.username;
         html+=`<button onclick="setDailyCompare('${u.username}')"
             style="padding:4px 12px;border-radius:20px;border:1px solid ${isActive?colorFor(u.username):'var(--border-subtle)'};
-            background:${isActive?'rgba(99,133,255,0.12)':'transparent'};
+            background:${isActive?'rgba(255,59,78,0.12)':'transparent'};
             color:${isActive?colorFor(u.username):'var(--text-muted)'};
             font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all 0.15s;">
             <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colorFor(u.username)};margin-left:4px;"></span>

@@ -208,13 +208,13 @@ function renderRewardBox(userStatus) {
                 font-size:10px;font-weight:700;
                 padding:4px 12px;
                 border-radius:20px;
-                border:1px solid rgba(99,133,255,0.25);
-                background:rgba(99,133,255,0.08);
-                color:#6385ff;
+                border:1px solid rgba(255,59,78,0.25);
+                background:rgba(255,59,78,0.08);
+                color:#ff3b4e;
                 cursor:pointer;
                 font-family:var(--font,inherit);
                 transition:all 0.18s;
-            " onmouseover="this.style.background='rgba(99,133,255,0.16)'" onmouseout="this.style.background='rgba(99,133,255,0.08)'">
+            " onmouseover="this.style.background='rgba(255,59,78,0.16)'" onmouseout="this.style.background='rgba(255,59,78,0.08)'">
                 <span style="margin-left:4px;">جزئیات</span><span style="font-size:9px;">▾</span>
             </button>
         </div>` : ''}

@@ -126,7 +126,7 @@
             width: 30px; height: 30px;
             border-radius: 50%;
             background: var(--accent-dim);
-            border: 1px solid rgba(99,133,255,0.2);
+            border: 1px solid rgba(255,59,78,0.2);
             display: flex; align-items: center; justify-content: center;
             font-size: 13px;
             color: var(--accent);
@@ -250,7 +250,7 @@
                 <div id="matchRankingSelector" style="margin-bottom:14px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:14px;padding:12px 14px;">
                     <div style="font-size:12px;font-weight:800;color:var(--text-primary);margin-bottom:10px;">🎯 رتبه‌بندی بر اساس بازی</div>
                     <select id="matchRankingSelect" onchange="showMatchRanking(this.value)"
-                        style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(99,133,255,0.4);background:rgba(99,133,255,0.10);color:var(--text-primary);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;direction:rtl;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236385ff%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><polyline points=%226 9 12 15 18 9%22/></svg>');background-repeat:no-repeat;background-position:left 14px center;padding-left:36px;">
+                        style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,59,78,0.4);background:rgba(255,59,78,0.10);color:var(--text-primary);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;direction:rtl;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23ff3b4e%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><polyline points=%226 9 12 15 18 9%22/></svg>');background-repeat:no-repeat;background-position:left 14px center;padding-left:36px;">
                         <option value="all">🏆 رتبه‌بندی کل</option>
                     </select>
                 </div>
@@ -297,7 +297,7 @@
         // ── استایل دکمه‌های رتبه‌بندی بازی ──
         (function() {
             var s = document.createElement('style');
-            s.textContent = `.match-rank-btn{transition:all 0.15s;} .match-rank-btn.active{background:rgba(99,133,255,0.2)!important;color:var(--accent)!important;border-color:rgba(99,133,255,0.5)!important;box-shadow:0 0 0 1px rgba(99,133,255,0.2);}`;
+            s.textContent = `.match-rank-btn{transition:all 0.15s;} .match-rank-btn.active{background:rgba(255,59,78,0.2)!important;color:var(--accent)!important;border-color:rgba(255,59,78,0.5)!important;box-shadow:0 0 0 1px rgba(255,59,78,0.2);}`;
             document.head.appendChild(s);
         })();
 
@@ -791,7 +791,7 @@
                             if (pts === null) return '';
                             var cfg = {
                                 10: {fg:'var(--green)',bg:'rgba(52,211,153,0.15)',br:'rgba(52,211,153,0.3)'},
-                                7:  {fg:'var(--accent)',bg:'rgba(99,133,255,0.15)',br:'rgba(99,133,255,0.3)'},
+                                7:  {fg:'var(--accent)',bg:'rgba(255,59,78,0.15)',br:'rgba(255,59,78,0.3)'},
                                 5:  {fg:'var(--gold)',bg:'rgba(240,192,64,0.15)',br:'rgba(240,192,64,0.3)'},
                                 2:  {fg:'var(--text-muted)',bg:'var(--bg-elevated)',br:'var(--border-subtle)'}
                             };
@@ -814,7 +814,7 @@
                             '</div>' +
                             sortedG3.map(function(g) {
                                 return '<div style="margin-bottom:10px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:10px;overflow:hidden;">' +
-                                    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:rgba(99,133,255,0.06);border-bottom:1px solid var(--border-subtle);">' +
+                                    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,59,78,0.06);border-bottom:1px solid var(--border-subtle);">' +
                                         '<span style="font-size:13px;font-weight:800;color:var(--accent);display:flex;align-items:center;gap:6px;">' +
                                             '<span style="font-size:10px;color:var(--text-muted);font-weight:600;">'+fHome+'</span>' +
                                             '<span>'+g.home+' – '+g.away+'</span>' +

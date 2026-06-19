@@ -661,7 +661,7 @@ async function fetchAndRenderContent() {
             // امتیاز پوشه برای کاربر عادی
             const folderScore = (userRole !== 'admin') ? calcFolderScore(folder.id) : null;
             const folderScoreBadge = (folderScore !== null)
-                ? `<span style="font-size:11px;font-weight:800;color:var(--accent);background:rgba(99,133,255,0.12);border:1px solid rgba(99,133,255,0.25);padding:2px 9px;border-radius:20px;white-space:nowrap;">⭐ ${folderScore} امتیاز</span>`
+                ? `<span style="font-size:11px;font-weight:800;color:var(--accent);background:rgba(255,59,78,0.12);border:1px solid rgba(255,59,78,0.25);padding:2px 9px;border-radius:20px;white-space:nowrap;">⭐ ${folderScore} امتیاز</span>`
                 : '';
 
             folderBox.innerHTML = `
@@ -764,11 +764,11 @@ async function fetchAndRenderContent() {
                             <div class="admin-score-inputs" style="margin-top:2px;">
                                 <input type="number" id="home-input-${match.id}" class="score-input" value="${predHome}" placeholder="0"
                                     ${(hasPrediction || isTimeExpired) ? 'disabled' : ''}
-                                    style="border-color:rgba(99,133,255,0.35); color:var(--accent);">
+                                    style="border-color:rgba(255,59,78,0.35); color:var(--accent);">
                                 <span class="score-dash">–</span>
                                 <input type="number" id="away-input-${match.id}" class="score-input" value="${predAway}" placeholder="0"
                                     ${(hasPrediction || isTimeExpired) ? 'disabled' : ''}
-                                    style="border-color:rgba(99,133,255,0.35); color:var(--accent);">
+                                    style="border-color:rgba(255,59,78,0.35); color:var(--accent);">
                             </div>
                             <span style="font-size:10px; color:var(--accent); opacity:0.7;">پیش‌بینی شما</span>
                         </div>
@@ -1474,7 +1474,7 @@ window.showMatchPredictions = async (matchId, homeName, awayName) => {
             if (points === null) return '';
             const colors = {
                 10: { bg: 'rgba(52,211,153,0.15)', fg: 'var(--green)', border: 'rgba(52,211,153,0.3)' },
-                7:  { bg: 'rgba(99,133,255,0.15)', fg: 'var(--accent)', border: 'rgba(99,133,255,0.3)' },
+                7:  { bg: 'rgba(255,59,78,0.15)', fg: 'var(--accent)', border: 'rgba(255,59,78,0.3)' },
                 5:  { bg: 'rgba(240,192,64,0.15)', fg: 'var(--gold)',   border: 'rgba(240,192,64,0.3)' },
                 2:  { bg: 'var(--bg-elevated)',    fg: 'var(--text-muted)', border: 'var(--border-subtle)' },
             };
@@ -1484,7 +1484,7 @@ window.showMatchPredictions = async (matchId, homeName, awayName) => {
 
         bodyEl.innerHTML = realResultBlock + sortedGroups.map(g => `
             <div style="margin-bottom:12px; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:10px; overflow:hidden;">
-                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 12px; background:rgba(99,133,255,0.06); border-bottom:1px solid var(--border-subtle);">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 12px; background:rgba(255,59,78,0.06); border-bottom:1px solid var(--border-subtle);">
                     <span style="font-size:13px; font-weight:800; color:var(--accent); display:flex; align-items:center; gap:6px; white-space:nowrap;">
                         <span style="font-size:10px; color:var(--text-muted); font-weight:600;">${homeName}</span>
                         <span>${g.home} – ${g.away}</span>
