@@ -477,6 +477,7 @@ async function initTables() {
 // ══════════════════════════════════════════
 let _chartUsers = [];  // {username, visible}
 let _chartReady = false;
+const _soloState = {}; // groupId -> username | null (سازگاری با کد قدیمی)
 // سری‌های داده
 let _seriesPerMatch  = {};  // username -> [{pts, notPred}]  (نمودار ۱)
 let _seriesByDay     = {};  // username -> [{day, cumScore}]  (نمودار ۳: رشد تجمعی روزانه)
@@ -609,7 +610,7 @@ async function initChart() {
 }
 
 // ══════════════════════════════════════════
-// لگند مشترک (solo-click)
+// لگند مشترک — انتخاب تا ۲ کاربر همزمان
 // ══════════════════════════════════════════
 function buildLegendHTML(groupId) {
     return _chartUsers.map(u=>`
@@ -620,32 +621,51 @@ function buildLegendHTML(groupId) {
         </div>`).join('');
 }
 
-// solo-click: کلیک روی کاربر = فقط اون نمایش داده شه، کلیک دوباره = همه برگردن
-const _soloState = {}; // groupId -> username | null
+// انتخاب چند کاربر: حالت "multi" — تا ۲ کاربر انتخاب‌پذیر
+// _selectedUsers[groupId] = Set<username> (حداکثر ۲)
+const _selectedUsers = {}; // groupId -> Set<username>
+
 window.handleLegendClick = function(groupId, username) {
-    if (_soloState[groupId] === username) {
-        // برگشت به حالت همه
-        _soloState[groupId] = null;
-        _chartUsers.forEach(u=>{ u.visible=true; });
-        if (groupId==='daily') { _dailyCompareUser=null; }
+    if (!_selectedUsers[groupId]) _selectedUsers[groupId] = new Set();
+    const sel = _selectedUsers[groupId];
+
+    if (sel.has(username)) {
+        sel.delete(username);
     } else {
-        _soloState[groupId] = username;
-        _chartUsers.forEach(u=>{ u.visible = u.username===username; });
+        if (sel.size >= 2) {
+            // قدیمی‌ترین رو حذف کن
+            const first = sel.values().next().value;
+            sel.delete(first);
+        }
+        sel.add(username);
     }
+
+    // اگر هیچ‌کس انتخاب نشده → همه نمایش داده می‌شوند
+    const noneSelected = sel.size === 0;
+    _chartUsers.forEach(u => {
+        u.visible = noneSelected || sel.has(u.username);
+    });
+
+    // sync _soloState برای سازگاری با کد قدیمی
+    _soloState[groupId] = sel.size === 1 ? [...sel][0] : null;
+
     // آپدیت UI مقایسه روزانه
-    if (groupId==='daily') {
-        const ui=document.getElementById('daily-compare-ui');
-        if(ui) ui.innerHTML=buildDailyCompareUI();
+    if (groupId === 'daily') {
+        const ui = document.getElementById('daily-compare-ui');
+        if (ui) ui.innerHTML = buildDailyCompareUI();
     }
+
     // آپدیت لگند همه گروه‌ها
-    ['match','rank','growth','daily'].forEach(g=>{
-        document.querySelectorAll(`.legend-item[data-group="${g}"]`).forEach(el=>{
+    ['match','rank','growth','daily'].forEach(g => {
+        if (!_selectedUsers[g]) _selectedUsers[g] = new Set();
+        document.querySelectorAll(`.legend-item[data-group="${g}"]`).forEach(el => {
             const u = el.dataset.user;
-            const vis = _chartUsers.find(x=>x.username===u)?.visible;
-            el.classList.toggle('solo', _soloState[g]===u);
-            el.classList.toggle('faded', !vis && _soloState[g]!==null);
+            const selG = _selectedUsers[g];
+            const noneG = selG.size === 0;
+            const visG = noneG || selG.has(u);
+            el.classList.toggle('solo', selG.has(u) && !noneG);
+            el.classList.toggle('faded', !visG);
         });
-        // آپدیت SVG خطوط
         updateSvgVisibility(g);
     });
 };
@@ -662,9 +682,9 @@ function updateSvgVisibility(groupId) {
 }
 
 // ══════════════════════════════════════════
-// زوم نمودارها
+// زوم نمودارها — افقی + عمودی
 // ══════════════════════════════════════════
-const ZOOM_STEP = 0.2, ZOOM_MIN = 0.6, ZOOM_MAX = 2.4;
+const ZOOM_STEP = 0.2, ZOOM_MIN = 0.4, ZOOM_MAX = 4.0;
 let _zoom = { match: 1, rank: 1, growth: 1, daily: 1 };
 
 window.adjustZoom = function(id, dir) {
@@ -673,7 +693,31 @@ window.adjustZoom = function(id, dir) {
     if (z === _zoom[id]) return;
     _zoom[id] = z;
     rerenderChart(id);
+    // بعد از رندر، به آخر اسکرول نکن
 };
+
+// فعال‌سازی اسکرول افقی با ویل موس روی wrapper
+function enableHorizontalScroll(wrapper) {
+    if (!wrapper || wrapper._hScrollBound) return;
+    wrapper._hScrollBound = true;
+    wrapper.addEventListener('wheel', (e) => {
+        if (e.deltaY !== 0) {
+            e.preventDefault();
+            wrapper.scrollLeft += e.deltaY * 1.5;
+        }
+    }, { passive: false });
+
+    // لمس افقی برای موبایل (swipe)
+    let touchStartX = 0, touchScrollStart = 0;
+    wrapper.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchScrollStart = wrapper.scrollLeft;
+    }, { passive: true });
+    wrapper.addEventListener('touchmove', (e) => {
+        const dx = touchStartX - e.touches[0].clientX;
+        wrapper.scrollLeft = touchScrollStart + dx;
+    }, { passive: true });
+}
 
 function rerenderChart(id) {
     const wrapper = document.querySelector(`.chart-scroll-wrapper[data-chart="${id}"]`);
@@ -684,6 +728,7 @@ function rerenderChart(id) {
     const tip = document.getElementById('chartTooltip');
     if (svgEl) makeDotEvents(svgEl, tip);
     updateSvgVisibility(id);
+    enableHorizontalScroll(wrapper);
 }
 
 // ══════════════════════════════════════════
@@ -1041,7 +1086,8 @@ function renderAllCharts(container) {
     const tip = document.getElementById('chartTooltip');
 
     const zoomControls = id => `
-        <div class="chart-zoom-controls">
+        <div class="chart-zoom-controls" style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:9px;color:var(--text-3);white-space:nowrap;">← اسکرول →</span>
             <button class="chart-zoom-btn" onclick="adjustZoom('${id}',1)" title="بزرگ‌نمایی">+</button>
             <button class="chart-zoom-btn" onclick="adjustZoom('${id}',-1)" title="کوچک‌نمایی">−</button>
         </div>`;
@@ -1054,6 +1100,7 @@ function renderAllCharts(container) {
                 ${zoomControls('match')}
             </div>
             <div class="chart-legend" id="legend-match">${buildLegendHTML('match')}</div>
+            <p style="font-size:10px;color:var(--text-3);margin-bottom:6px;text-align:center;">برای انتخاب تا ۲ کاربر روی نام‌ها کلیک کنید • برای اسکرول افقی از ویل موس یا swipe استفاده کنید</p>
             <div class="chart-scroll-wrapper" data-chart="match">${renderMatchChart()}</div>
             <p class="chart-desc">امتیاز هر کاربر در هر بازی — ۱۰ نتیجه دقیق، ۷ اختلاف دقیق، ۵ برنده درست، ۲ اشتباه، ۰ پیش‌بینی نشده</p>
         </div>
@@ -1098,6 +1145,9 @@ function renderAllCharts(container) {
     ['match','rank','growth','daily'].forEach(g=>{
         const svgEl=document.getElementById(`svg-${g}`);
         if(svgEl) makeDotEvents(svgEl, tip);
+        // فعال‌سازی اسکرول افقی با ویل موس
+        const wrapper = document.querySelector(`.chart-scroll-wrapper[data-chart="${g}"]`);
+        if (wrapper) enableHorizontalScroll(wrapper);
     });
 }
 

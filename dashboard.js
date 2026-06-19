@@ -248,21 +248,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
         modalEl.innerHTML = `
             <div id="lastVisitModalBox" style="
-                background:var(--bg-card,#1a1d2e); border:1px solid var(--border-subtle,rgba(255,255,255,0.1));
+                background:var(--card); border:1px solid var(--border-pink);
                 border-radius:18px; width:100%; max-width:400px; max-height:80vh;
-                display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.6); overflow:hidden;
+                display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.7),0 0 40px rgba(255,45,110,0.08); overflow:hidden;
             ">
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border-subtle,rgba(255,255,255,0.08));">
-                    <span style="font-size:14px;font-weight:800;color:var(--text-primary,#fff);">👥 آخرین بازدید کاربران</span>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);">
+                    <span style="font-size:14px;font-weight:800;color:var(--text-1);">👥 آخرین بازدید کاربران</span>
                     <button id="closeLastVisitModal" style="
-                        width:28px;height:28px;border-radius:50%;border:1px solid var(--border-subtle,rgba(255,255,255,0.1));
-                        background:var(--bg-elevated,rgba(255,255,255,0.05));color:var(--text-muted,#8a8f98);
+                        width:28px;height:28px;border-radius:50%;border:1px solid var(--border);
+                        background:var(--card-2);color:var(--text-3);
                         font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;
-                        font-family:var(--font);transition:all 0.15s;
+                        font-family:var(--font);transition:all 0.15s;text-align:center;
                     ">✕</button>
                 </div>
                 <div id="lastVisitModalContent" style="overflow-y:auto;padding:12px 14px;flex:1;">
-                    <p style="text-align:center;color:#8a8f98;">در حال دریافت...</p>
+                    <p style="text-align:center;color:var(--text-3);">در حال دریافت...</p>
                 </div>
             </div>`;
         document.body.appendChild(modalEl);
@@ -301,15 +301,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // تبدیل اعداد فارسی به انگلیسی
                 const toEnDigits = s => s ? s.replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))) : s;
                 const badge = visitTime
-                    ? `<span style="font-size:13px;color:var(--text-muted,#8a8f98);">🕒 ${toEnDigits(visitTime)}</span>`
-                    : `<span style="font-size:13px;color:#ff3b30;">🔴 هنوز بازدیدی ثبت نشده</span>`;
+                    ? `<span style="font-size:12px;color:var(--text-2);direction:ltr;">🕒 ${toEnDigits(visitTime)}</span>`
+                    : `<span style="font-size:12px;color:var(--red);">🔴 بازدید نشده</span>`;
                 return `<div style="
                     display:flex;justify-content:space-between;align-items:center;
                     padding:10px 12px;border-radius:10px;margin-bottom:6px;
-                    background:var(--bg-elevated,rgba(255,255,255,0.04));
-                    border:1px solid var(--border-subtle,rgba(255,255,255,0.07));
+                    background:var(--card-2);
+                    border:1px solid var(--border);
+                    transition:border-color 0.15s;
                 ">
-                    <span style="font-size:13px;font-weight:600;color:var(--text-primary,#fff);">👤 ${u.username}</span>
+                    <span style="font-size:13px;font-weight:700;color:var(--text-1);">👤 ${u.username}</span>
                     ${badge}
                 </div>`;
             }).join('');
@@ -776,28 +777,27 @@ async function fetchAndRenderContent() {
 
                     if (isTimeExpired) {
                         actionBtnZone = `
-                            <div class="score-action-zone" id="action-zone-${match.id}" style="flex-direction:column;align-items:center;gap:6px;">
-                                <button class="btn-score-edit" disabled
-                                    style="background:var(--bg-elevated); color:var(--text-muted); border-color:var(--border-subtle); cursor:not-allowed; opacity:0.6;">
+                            <div class="score-action-zone" id="action-zone-${match.id}" style="flex-direction:row;align-items:center;gap:6px;width:100%;justify-content:flex-end;">
+                                <button class="btn-show-preds match-action-equal-btn" title="پیش‌بینی کاربران" onclick="showMatchPredictions(${match.id}, '${homeNameSafe}', '${awayNameSafe}')">👥 پیش‌بینی کاربران</button>
+                                <button class="btn-score-edit match-action-equal-btn" disabled
+                                    style="cursor:not-allowed; opacity:0.6;">
                                     🔒 به پایان رسید
                                 </button>
-                                <button class="btn-show-preds" title="پیش‌بینی کاربران" onclick="showMatchPredictions(${match.id}, '${homeNameSafe}', '${awayNameSafe}')"
-                                    style="font-size:11px;padding:5px 12px;opacity:0.85;">👥 جزئیات</button>
                             </div>
                         `;
                     } else {
                         // زمان بازی نرسیده — دکمه پیش‌بینی کاربران قفل است
                         const predsLocked = !isTimeExpired;
                         actionBtnZone = `
-                            <div class="score-action-zone" id="action-zone-${match.id}">
-                                ${hasPrediction
-                                    ? `<button class="btn-score-edit btn-edit-blue" onclick="toggleEditScore(${match.id})">ویرایش</button>`
-                                    : `<button class="btn-score-submit" onclick="saveUserPrediction(${match.id})">ثبت پیش‌بینی</button>`
-                                }
+                            <div class="score-action-zone" id="action-zone-${match.id}" style="flex-direction:row;align-items:center;gap:6px;width:100%;justify-content:flex-end;">
                                 ${predsLocked
-                                    ? `<button class="btn-show-preds" disabled title="پیش‌بینی کاربران بعد از شروع بازی نمایش داده می‌شود"
+                                    ? `<button class="btn-show-preds match-action-equal-btn" disabled title="پیش‌بینی کاربران بعد از شروع بازی نمایش داده می‌شود"
                                         style="opacity:0.4;cursor:not-allowed;filter:grayscale(1);">🔒 پیش‌بینی کاربران</button>`
-                                    : `<button class="btn-show-preds" title="پیش‌بینی کاربران" onclick="showMatchPredictions(${match.id}, '${homeNameSafe}', '${awayNameSafe}')">👥 پیش‌بینی کاربران</button>`
+                                    : `<button class="btn-show-preds match-action-equal-btn" title="پیش‌بینی کاربران" onclick="showMatchPredictions(${match.id}, '${homeNameSafe}', '${awayNameSafe}')">👥 پیش‌بینی کاربران</button>`
+                                }
+                                ${hasPrediction
+                                    ? `<button class="btn-score-edit btn-edit-blue match-action-equal-btn" onclick="toggleEditScore(${match.id})">ویرایش</button>`
+                                    : `<button class="btn-score-submit match-action-equal-btn" onclick="saveUserPrediction(${match.id})">ثبت پیش‌بینی</button>`
                                 }
                             </div>
                         `;
@@ -812,9 +812,9 @@ async function fetchAndRenderContent() {
                             <span class="team-name text-right" style="flex:1; text-align:right;">${awayName}</span>
                         </div>
                     </div>
-                    <div class="match-footer">
-                        ${dateTimeTag}
-                        <div class="match-actions">
+                    <div class="match-footer" style="flex-direction:column;align-items:center;gap:8px;">
+                        <div style="display:flex;justify-content:center;width:100%;">${dateTimeTag}</div>
+                        <div class="match-actions" style="width:100%;display:flex;justify-content:flex-end;">
                             ${actionBtnZone}
                             ${delMatchBtn}
                         </div>
