@@ -6,7 +6,26 @@
     <title>امتیازات — جام جهانی ۲۰۲۶</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
+        :root {
+            --bg-elevated: var(--card);
+            --bg-card: var(--card-2);
+            --bg-base: var(--black);
+            --bg-hover: var(--card-hover);
+            --bg-deep: var(--black);
+            --border-subtle: var(--border);
+            --border-mid: var(--border-2);
+            --border-active: var(--border-pink);
+            --accent-dim: var(--pink-dim);
+            --accent-glow: var(--pink-glow);
+            --accent: var(--pink);
+            --text-primary: var(--text-1);
+            --text-secondary: var(--text-2);
+            --text-muted: var(--text-3);
+        }
+    </style>
+<style>
         /* ─── هدر ─── */
         .app-header .header-inner {
             display: flex;
@@ -16,9 +35,9 @@
         .back-btn-inline {
             height: 34px;
             border-radius: 999px;
-            background: var(--bg-elevated);
-            border: 1px solid var(--border-subtle);
-            color: var(--text-secondary);
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text-2);
             font-size: 12px;
             font-weight: 700;
             padding: 0 16px;
@@ -28,13 +47,13 @@
             font-family: var(--font);
             transition: all 0.18s;
         }
-        .back-btn-inline:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .back-btn-inline:hover { background: var(--card-hover); color: var(--text-1); }
 
         /* ─── تب‌ها ─── */
         .scores-tabs {
             display: flex;
             gap: 4px;
-            background: var(--bg-elevated);
+            background: var(--card);
             border-radius: var(--radius-md);
             padding: 4px;
             margin-bottom: 20px;
@@ -45,7 +64,7 @@
             border: none;
             border-radius: 10px;
             background: transparent;
-            color: var(--text-muted);
+            color: var(--text-3);
             font-size: 13px;
             font-weight: 600;
             font-family: var(--font);
@@ -53,8 +72,8 @@
             transition: all 0.2s;
         }
         .scores-tab-btn.active {
-            background: var(--bg-card);
-            color: var(--text-primary);
+            background: var(--card-2);
+            color: var(--text-1);
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
         .scores-tab-panel { display: none; }
@@ -69,47 +88,47 @@
             font-size: 13px; font-weight: 800;
         }
         .score-table-header.h10 { background: rgba(52,211,153,0.15); color: var(--green); border: 1px solid rgba(52,211,153,0.25); }
-        .score-table-header.h7  { background: rgba(255,59,78,0.15); color: var(--accent); border: 1px solid rgba(255,59,78,0.25); }
+        .score-table-header.h7  { background: rgba(255,59,78,0.15); color: var(--pink); border: 1px solid rgba(255,59,78,0.25); }
         .score-table-header.h5  { background: rgba(240,192,64,0.15); color: var(--gold); border: 1px solid rgba(240,192,64,0.25); }
-        .score-table-header.h2  { background: rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid var(--border-subtle); }
+        .score-table-header.h2  { background: rgba(255,255,255,0.05); color: var(--text-2); border: 1px solid var(--border); }
         .score-table-header.hnp { background: rgba(248,113,113,0.12); color: var(--red); border: 1px solid rgba(248,113,113,0.25); }
-        .score-table-body { border: 1px solid var(--border-subtle); border-top: none; border-radius: 0 0 var(--radius-md) var(--radius-md); overflow: hidden; }
+        .score-table-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--radius-md) var(--radius-md); overflow: hidden; }
         .score-row {
             display: grid;
             grid-template-columns: 32px 1fr 70px 70px;
             align-items: center; padding: 10px 14px;
-            background: var(--bg-elevated);
-            border-bottom: 1px solid var(--border-subtle);
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
             font-size: 12px; gap: 8px;
         }
         .score-row:last-child { border-bottom: none; }
-        .score-row:nth-child(even) { background: var(--bg-card); }
+        .score-row:nth-child(even) { background: var(--card-2); }
         .score-row.is-me { background: var(--gold-dim) !important; }
         .rank-badge {
             width: 26px; height: 26px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             font-size: 11px; font-weight: 800;
-            background: var(--bg-card); color: var(--text-muted);
-            border: 1px solid var(--border-subtle); flex-shrink: 0;
+            background: var(--card-2); color: var(--text-3);
+            border: 1px solid var(--border); flex-shrink: 0;
         }
         .rank-badge.r1 { background: rgba(240,192,64,0.2); color: var(--gold); border-color: rgba(240,192,64,0.4); }
         .rank-badge.r2 { background: rgba(180,180,200,0.15); color: #c0c0d0; border-color: rgba(180,180,200,0.3); }
         .rank-badge.r3 { background: rgba(205,127,50,0.15); color: #cd7f32; border-color: rgba(205,127,50,0.3); }
-        .score-row-name { font-size: 13px; font-weight: 600; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .score-row-name { font-size: 13px; font-weight: 600; color: var(--text-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .score-row-name.is-me { color: var(--gold); }
-        .score-row-count { text-align: center; font-size: 12px; color: var(--text-muted); font-weight: 600; }
+        .score-row-count { text-align: center; font-size: 12px; color: var(--text-3); font-weight: 600; }
         .score-row-pts { text-align: center; font-size: 13px; font-weight: 800; }
-        .pts10 { color: var(--green); } .pts7 { color: var(--accent); }
-        .pts5  { color: var(--gold);  } .pts2 { color: var(--text-secondary); }
+        .pts10 { color: var(--green); } .pts7 { color: var(--pink); }
+        .pts5  { color: var(--gold);  } .pts2 { color: var(--text-2); }
         .ptsnp { color: var(--red);   }
         .col-head {
             display: grid; grid-template-columns: 32px 1fr 70px 70px;
             padding: 6px 14px; font-size: 10px; font-weight: 700;
-            color: var(--text-muted); gap: 8px;
-            background: var(--bg-card); border-bottom: 1px solid var(--border-subtle);
+            color: var(--text-3); gap: 8px;
+            background: var(--card-2); border-bottom: 1px solid var(--border);
         }
         .col-head span:nth-child(3), .col-head span:nth-child(4) { text-align: center; }
-        .empty-table { padding: 20px; text-align: center; color: var(--text-muted); font-size: 12px; background: var(--bg-elevated); }
+        .empty-table { padding: 20px; text-align: center; color: var(--text-3); font-size: 12px; background: var(--card); }
 
         /* ─── کپی‌کار ─── */
         .copycat-sort-toggle {
@@ -118,35 +137,35 @@
         .copycat-sort-btn {
             flex: 1; min-width: 120px;
             padding: 9px 8px;
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border);
             border-radius: var(--radius-md);
-            background: var(--bg-elevated);
-            color: var(--text-muted);
+            background: var(--card);
+            color: var(--text-3);
             font-size: 12px; font-weight: 700;
             font-family: var(--font);
             cursor: pointer; transition: all 0.18s;
         }
         .copycat-sort-btn.active {
-            background: var(--accent-dim);
-            color: var(--accent);
+            background: var(--pink-dim);
+            color: var(--pink);
             border-color: rgba(255,59,78,0.35);
         }
         .copycat-pair {
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border);
             border-radius: var(--radius-md);
             margin-bottom: 12px;
             overflow: hidden;
-            background: var(--bg-elevated);
+            background: var(--card);
         }
         .copycat-pair-header {
             display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
             padding: 10px 14px;
-            border-bottom: 1px solid var(--border-subtle);
+            border-bottom: 1px solid var(--border);
         }
-        .copycat-names { flex: 1; font-size: 13px; font-weight: 700; color: var(--text-primary); }
+        .copycat-names { flex: 1; font-size: 13px; font-weight: 700; color: var(--text-1); }
         .copycat-badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
         .copycat-count-badge {
-            font-size: 11px; font-weight: 800; color: var(--accent);
+            font-size: 11px; font-weight: 800; color: var(--pink);
             background: rgba(255,59,78,0.12); border: 1px solid rgba(255,59,78,0.25);
             padding: 3px 9px; border-radius: 20px; white-space: nowrap;
         }
@@ -156,15 +175,15 @@
             padding: 3px 9px; border-radius: 20px; white-space: nowrap;
         }
         .copycat-rate-badge.na {
-            color: var(--text-muted);
+            color: var(--text-3);
             background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border);
         }
         .copycat-matches { padding: 4px 14px 8px; }
         .copycat-match-row {
             display: flex; align-items: center; justify-content: space-between; gap: 8px;
-            padding: 6px 0; font-size: 12px; color: var(--text-secondary);
-            border-bottom: 1px dashed var(--border-subtle);
+            padding: 6px 0; font-size: 12px; color: var(--text-2);
+            border-bottom: 1px dashed var(--border);
         }
         .copycat-match-row:last-child { border-bottom: none; }
         .copycat-match-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
@@ -174,18 +193,18 @@
         }
         .copycat-pts-badge {
             font-size: 10px; font-weight: 800; border-radius: 8px; padding: 2px 8px;
-            white-space: nowrap; background: rgba(255,255,255,0.05); border: 1px solid var(--border-subtle);
+            white-space: nowrap; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
         }
         .copycat-pts-badge.pts10 { color: var(--green); background: rgba(52,211,153,0.12); border-color: rgba(52,211,153,0.25); }
-        .copycat-pts-badge.pts7  { color: var(--accent); background: rgba(255,59,78,0.12); border-color: rgba(255,59,78,0.25); }
+        .copycat-pts-badge.pts7  { color: var(--pink); background: rgba(255,59,78,0.12); border-color: rgba(255,59,78,0.25); }
         .copycat-pts-badge.pts5  { color: var(--gold); background: rgba(240,192,64,0.12); border-color: rgba(240,192,64,0.25); }
-        .copycat-pts-badge.pts2  { color: var(--text-secondary); }
-        .copycat-pts-badge.pending { color: var(--text-muted); }
+        .copycat-pts-badge.pts2  { color: var(--text-2); }
+        .copycat-pts-badge.pending { color: var(--text-3); }
 
         /* ─── نمودار مشترک ─── */
         .chart-block { margin-bottom: 28px; }
         .chart-title {
-            font-size: 13px; font-weight: 800; color: var(--text-primary);
+            font-size: 13px; font-weight: 800; color: var(--text-1);
             margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
             justify-content: space-between;
         }
@@ -193,21 +212,21 @@
         .chart-zoom-controls { display: flex; gap: 4px; }
         .chart-zoom-btn {
             width: 24px; height: 24px; border-radius: 6px;
-            background: var(--bg-card); border: 1px solid var(--border-subtle);
-            color: var(--text-secondary); font-size: 14px; font-weight: 800;
+            background: var(--card-2); border: 1px solid var(--border);
+            color: var(--text-2); font-size: 14px; font-weight: 800;
             cursor: pointer; display: flex; align-items: center; justify-content: center;
             font-family: var(--font); line-height: 1; padding: 0;
             transition: all 0.15s;
         }
-        .chart-zoom-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .chart-zoom-btn:hover { background: var(--card-hover); color: var(--text-1); }
         .chart-scroll-wrapper {
             overflow-x: auto;
             display: flex;
             align-items: flex-start;
             direction: ltr;
             border-radius: var(--radius-md);
-            background: var(--bg-elevated);
-            border: 1px solid var(--border-subtle);
+            background: var(--card);
+            border: 1px solid var(--border);
             padding: 14px 8px 8px;
         }
         .chart-yaxis-sticky {
@@ -215,10 +234,10 @@
             left: 0;
             z-index: 2;
             flex-shrink: 0;
-            background: var(--bg-elevated);
+            background: var(--card);
         }
         .chart-desc {
-            font-size: 11px; color: var(--text-muted);
+            font-size: 11px; color: var(--text-3);
             text-align: center; margin-top: 8px; line-height: 1.5;
         }
 
@@ -228,31 +247,31 @@
         }
         .legend-item {
             display: flex; align-items: center; gap: 5px;
-            font-size: 11px; color: var(--text-secondary);
-            background: var(--bg-elevated);
+            font-size: 11px; color: var(--text-2);
+            background: var(--card);
             padding: 5px 11px; border-radius: 20px;
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border);
             cursor: pointer; transition: all 0.18s; user-select: none;
         }
-        .legend-item.solo { border-color: var(--border-active); color: var(--text-primary); background: var(--bg-card); }
+        .legend-item.solo { border-color: var(--border-pink); color: var(--text-1); background: var(--card-2); }
         .legend-item.faded { opacity: 0.3; }
         .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
         /* ─── tooltip ─── */
         .tooltip-overlay {
             position: fixed;
-            background: var(--bg-card);
-            border: 1px solid var(--border-mid);
+            background: var(--card-2);
+            border: 1px solid var(--border-2);
             border-radius: 10px; padding: 8px 12px;
-            font-size: 12px; color: var(--text-primary);
+            font-size: 12px; color: var(--text-1);
             pointer-events: none; z-index: 999; display: none;
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
             direction: rtl; max-width: 200px; line-height: 1.6;
         }
 
         /* ─── لودینگ ─── */
-        .loading-state { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 40px 20px; color: var(--text-muted); font-size: 13px; }
-        .spinner { width: 20px; height: 20px; border: 2px solid var(--border-subtle); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .loading-state { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 40px 20px; color: var(--text-3); font-size: 13px; }
+        .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--pink); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
@@ -477,7 +496,7 @@ async function initChart() {
         _settledMatches = settled;
 
         if (settled.length===0) {
-            container.innerHTML='<p style="color:var(--text-muted);padding:30px;text-align:center;">هنوز نتیجه‌ای ثبت نشده است.</p>';
+            container.innerHTML='<p style="color:var(--text-3);padding:30px;text-align:center;">هنوز نتیجه‌ای ثبت نشده است.</p>';
             return;
         }
 
@@ -769,7 +788,7 @@ function renderMatchChart() {
                                :`<strong>${u.username}</strong><br>بازی ${i+1}<br>+${d.pts} امتیاز`;
             svg+=`<circle data-user-dot="${u.username}" cx="${x}" cy="${y}" r="${r}"
                 fill="${d.pts===0?'rgba(255,255,255,0.1)':color}"
-                stroke="${d.pts===0?color:'var(--bg-deep)'}" stroke-width="1.5"
+                stroke="${d.pts===0?color:'var(--black)'}" stroke-width="1.5"
                 data-tip="${tip.replace(/"/g,"'")}" style="cursor:pointer;opacity:${op};transition:opacity 0.2s"/>`;
         });
     });
@@ -837,7 +856,7 @@ function renderRankChart() {
             const x=C.xFor(i),y=yFor(r);
             const tip=`<strong>${u.username}</strong><br>بازی شماره ${_matchLabels[i]||i+1}<br>رتبه: ${r}`;
             svg+=`<circle data-user-dot="${u.username}" cx="${x}" cy="${y}" r="3.5"
-                fill="${color}" stroke="var(--bg-deep)" stroke-width="1.5"
+                fill="${color}" stroke="var(--black)" stroke-width="1.5"
                 data-tip="${tip.replace(/"/g,"'")}" style="cursor:pointer;opacity:${op};transition:opacity 0.2s"/>`;
         });
     });
@@ -900,7 +919,7 @@ function renderGrowthChart() {
             const x=C.xFor(i),y=yFor(v);
             const tip=`<strong>${u.username}</strong><br>بازی شماره ${_matchLabels[i]||i+1}<br>جمع: ${v} امتیاز`;
             svg+=`<circle data-user-dot="${u.username}" cx="${x}" cy="${y}" r="3.5"
-                fill="${color}" stroke="var(--bg-deep)" stroke-width="1.5"
+                fill="${color}" stroke="var(--black)" stroke-width="1.5"
                 data-tip="${tip.replace(/"/g,"'")}" style="cursor:pointer;opacity:${op};transition:opacity 0.2s"/>`;
         });
     });
@@ -914,7 +933,7 @@ function renderGrowthChart() {
 // ══════════════════════════════════════════
 function renderDailyChart() {
     const n = _dailyDates.length;
-    if (n===0) return '<p style="color:var(--text-muted);padding:20px;text-align:center;">داده‌ای برای نمایش وجود ندارد.</p>';
+    if (n===0) return '<p style="color:var(--text-3);padding:20px;text-align:center;">داده‌ای برای نمایش وجود ندارد.</p>';
     const baseColW = Math.max(44, Math.min(90, Math.floor(330/Math.min(n,7))));
     const colW = Math.round(baseColW * _zoom.daily);
     const axisW = 28;
@@ -971,7 +990,7 @@ function renderDailyChart() {
             const x=C.xFor(i),y=yFor(v);
             const tip=`<strong>${u.username}</strong>${isCompare?' (مقایسه)':''}<br>تاریخ: ${_dailyDates[i]||''}<br>امتیاز این روز: <strong>${v}</strong>`;
             svg+=`<circle data-user-dot="${u.username}" cx="${x}" cy="${y}" r="${isCompare?4:3.5}"
-                fill="${color}" stroke="var(--bg-deep)" stroke-width="1.5"
+                fill="${color}" stroke="var(--black)" stroke-width="1.5"
                 data-tip="${tip.replace(/"/g,"'")}" style="cursor:pointer;opacity:1;transition:opacity 0.2s"/>`;
             if(v>0) svg+=`<text x="${x}" y="${y-7}" text-anchor="middle" font-size="9"
                 fill="${color}" font-family="Vazirmatn,sans-serif" font-weight="700" style="opacity:0.85">${v}</text>`;
@@ -985,23 +1004,23 @@ function renderDailyChart() {
 function buildDailyCompareUI() {
     const soloUser = _soloState['daily'];
     if (!soloUser) {
-        return `<p style="font-size:11px;color:var(--text-muted);text-align:center;padding:4px 0;">برای مقایسه، ابتدا روی نام یک کاربر در لگند کلیک کنید</p>`;
+        return `<p style="font-size:11px;color:var(--text-3);text-align:center;padding:4px 0;">برای مقایسه، ابتدا روی نام یک کاربر در لگند کلیک کنید</p>`;
     }
     let html = `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
-        <span style="font-size:11px;color:var(--text-muted);">مقایسه با:</span>`;
+        <span style="font-size:11px;color:var(--text-3);">مقایسه با:</span>`;
     _chartUsers.filter(u=>u.username!==soloUser).forEach(u=>{
         const isActive = _dailyCompareUser===u.username;
         html+=`<button onclick="setDailyCompare('${u.username}')"
-            style="padding:4px 12px;border-radius:20px;border:1px solid ${isActive?colorFor(u.username):'var(--border-subtle)'};
+            style="padding:4px 12px;border-radius:20px;border:1px solid ${isActive?colorFor(u.username):'var(--border)'};
             background:${isActive?'rgba(255,59,78,0.12)':'transparent'};
-            color:${isActive?colorFor(u.username):'var(--text-muted)'};
+            color:${isActive?colorFor(u.username):'var(--text-3)'};
             font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all 0.15s;">
             <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colorFor(u.username)};margin-left:4px;"></span>
             ${u.username}</button>`;
     });
     if (_dailyCompareUser) {
         html+=`<button onclick="setDailyCompare(null)"
-            style="padding:4px 10px;border-radius:20px;border:1px solid var(--border-subtle);background:transparent;
+            style="padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;
             color:var(--red);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);">✕ حذف</button>`;
     }
     html+=`</div>`;

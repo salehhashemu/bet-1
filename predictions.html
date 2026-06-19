@@ -7,12 +7,31 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    
     <style>
+        :root {
+            --bg-elevated: var(--card);
+            --bg-card: var(--card-2);
+            --bg-base: var(--black);
+            --bg-hover: var(--card-hover);
+            --bg-deep: var(--black);
+            --border-subtle: var(--border);
+            --border-mid: var(--border-2);
+            --border-active: var(--border-pink);
+            --accent-dim: var(--pink-dim);
+            --accent-glow: var(--pink-glow);
+            --accent: var(--pink);
+            --text-primary: var(--text-1);
+            --text-secondary: var(--text-2);
+            --text-muted: var(--text-3);
+        }
+    </style>
+<style>
         /* استایل‌های اختصاصی صفحه نتایج */
         .results-tabs {
             display: flex;
             gap: 4px;
-            background: var(--bg-elevated);
+            background: var(--card);
             border-radius: var(--radius-md);
             padding: 4px;
             margin-bottom: 16px;
@@ -23,7 +42,7 @@
             border: none;
             border-radius: 10px;
             background: transparent;
-            color: var(--text-muted);
+            color: var(--text-3);
             font-size: 13px;
             font-weight: 600;
             font-family: var(--font);
@@ -31,8 +50,8 @@
             transition: all 0.2s ease;
         }
         .tab-btn.active {
-            background: var(--bg-card);
-            color: var(--text-primary);
+            background: var(--card-2);
+            color: var(--text-1);
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
 
@@ -45,14 +64,14 @@
             justify-content: space-between;
             align-items: center;
             padding: 13px 15px;
-            background: var(--bg-elevated);
-            border: 1px solid var(--border-subtle);
+            background: var(--card);
+            border: 1px solid var(--border);
             border-radius: var(--radius-md);
             margin-bottom: 6px;
             transition: border-color 0.15s;
             animation: fadeUp 0.3s ease both;
         }
-        .lb-row:hover { border-color: var(--border-mid); }
+        .lb-row:hover { border-color: var(--border-2); }
         .lb-row.is-me {
             border-color: rgba(240,192,64,0.35);
             background: var(--gold-dim);
@@ -60,10 +79,10 @@
 
         .lb-left { display: flex; align-items: center; gap: 12px; }
         .lb-meta { display: flex; flex-direction: column; gap: 2px; }
-        .lb-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+        .lb-name { font-size: 14px; font-weight: 600; color: var(--text-1); }
         .lb-name.is-me { color: var(--gold); }
-        .lb-sub  { font-size: 11px; color: var(--text-muted); }
-        .lb-score { font-size: 16px; font-weight: 700; color: var(--accent); }
+        .lb-sub  { font-size: 11px; color: var(--text-3); }
+        .lb-score { font-size: 16px; font-weight: 700; color: var(--pink); }
         .lb-last-points {
             font-size: 11px;
             font-weight: 800;
@@ -78,7 +97,7 @@
         .lb-settled-ratio {
             font-size: 11px;
             font-weight: 800;
-            color: var(--text-muted);
+            color: var(--text-3);
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
             padding: 2px 7px;
@@ -92,11 +111,11 @@
         }
         .lb-rank-change.up { color: var(--green); }
         .lb-rank-change.down { color: var(--red); }
-        .lb-rank-change.same { color: var(--text-muted); }
+        .lb-rank-change.same { color: var(--text-3); }
 
         /* آکاردئون کاربران */
         .user-accord {
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border);
             border-radius: var(--radius-md);
             margin-bottom: 6px;
             overflow: hidden;
@@ -107,17 +126,17 @@
             justify-content: space-between;
             align-items: center;
             padding: 13px 15px;
-            background: var(--bg-elevated);
+            background: var(--card);
             cursor: pointer;
             transition: background 0.15s;
             user-select: none;
         }
-        .user-accord-head:hover { background: var(--bg-hover); }
+        .user-accord-head:hover { background: var(--card-hover); }
 
         .user-accord-name {
             font-size: 13px;
             font-weight: 600;
-            color: var(--text-primary);
+            color: var(--text-1);
             display: flex;
             align-items: center;
             gap: 8px;
@@ -125,32 +144,32 @@
         .user-accord-avatar {
             width: 30px; height: 30px;
             border-radius: 50%;
-            background: var(--accent-dim);
+            background: var(--pink-dim);
             border: 1px solid rgba(255,59,78,0.2);
             display: flex; align-items: center; justify-content: center;
             font-size: 13px;
-            color: var(--accent);
+            color: var(--pink);
             font-weight: 700;
             flex-shrink: 0;
         }
         .accord-toggle {
             width: 26px; height: 26px;
             border-radius: 50%;
-            background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            color: var(--text-muted);
+            background: var(--card-2);
+            border: 1px solid var(--border);
+            color: var(--text-3);
             font-size: 11px;
             display: flex; align-items: center; justify-content: center;
             transition: transform 0.2s, background 0.15s;
             flex-shrink: 0;
         }
-        .user-accord.open .accord-toggle { transform: rotate(180deg); background: var(--accent-dim); color: var(--accent); }
+        .user-accord.open .accord-toggle { transform: rotate(180deg); background: var(--pink-dim); color: var(--pink); }
 
         .user-accord-body {
             display: none;
             padding: 12px;
-            background: var(--bg-card);
-            border-top: 1px solid var(--border-subtle);
+            background: var(--card-2);
+            border-top: 1px solid var(--border);
         }
         .user-accord.open .user-accord-body { display: block; }
 
@@ -159,21 +178,21 @@
             margin-bottom: 8px;
             border-radius: var(--radius-sm);
             overflow: hidden;
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border);
         }
         .inner-folder-head {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 9px 12px;
-            background: var(--bg-elevated);
+            background: var(--card);
             cursor: pointer;
             font-size: 12px;
             font-weight: 600;
             color: var(--gold);
             transition: background 0.15s;
         }
-        .inner-folder-head:hover { background: var(--bg-hover); }
+        .inner-folder-head:hover { background: var(--card-hover); }
 
         .inner-folder-body { display: none; padding: 8px; }
         .inner-folder.open .inner-folder-body { display: block; }
@@ -185,12 +204,12 @@
             align-items: center;
             padding: 10px 12px;
             border-radius: var(--radius-sm);
-            background: var(--bg-elevated);
+            background: var(--card);
             margin-bottom: 5px;
             font-size: 12px;
             gap: 8px;
         }
-        .pred-team { flex: 1; font-weight: 600; color: var(--text-primary); }
+        .pred-team { flex: 1; font-weight: 600; color: var(--text-1); }
         .pred-team.left  { text-align: left; }
         .pred-team.right { text-align: right; }
 
@@ -209,9 +228,9 @@
             font-weight: 700;
             font-size: 13px;
         }
-        .pred-score.user-pred { color: var(--accent); }
+        .pred-score.user-pred { color: var(--pink); }
         .pred-score.real-score { color: var(--gold); }
-        .pred-label { font-size: 10px; color: var(--text-muted); }
+        .pred-label { font-size: 10px; color: var(--text-3); }
         .no-pred-badge {
             color: var(--red);
             font-size: 11px;
@@ -247,15 +266,15 @@
             <!-- تب رتبه‌بندی -->
             <div class="tab-panel active" id="panel-leaderboard">
                 <!-- انتخاب‌گر رتبه‌بندی بر اساس بازی -->
-                <div id="matchRankingSelector" style="margin-bottom:14px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:14px;padding:12px 14px;">
-                    <div style="font-size:12px;font-weight:800;color:var(--text-primary);margin-bottom:10px;">🎯 رتبه‌بندی بر اساس بازی</div>
+                <div id="matchRankingSelector" style="margin-bottom:14px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 14px;">
+                    <div style="font-size:12px;font-weight:800;color:var(--text-1);margin-bottom:10px;">🎯 رتبه‌بندی بر اساس بازی</div>
                     <select id="matchRankingSelect" onchange="showMatchRanking(this.value)"
-                        style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,59,78,0.4);background:rgba(255,59,78,0.10);color:var(--text-primary);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;direction:rtl;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23ff3b4e%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><polyline points=%226 9 12 15 18 9%22/></svg>');background-repeat:no-repeat;background-position:left 14px center;padding-left:36px;">
+                        style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,59,78,0.4);background:rgba(255,59,78,0.10);color:var(--text-1);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;direction:rtl;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23ff3b4e%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><polyline points=%226 9 12 15 18 9%22/></svg>');background-repeat:no-repeat;background-position:left 14px center;padding-left:36px;">
                         <option value="all">🏆 رتبه‌بندی کل</option>
                     </select>
                 </div>
                 <div id="leaderboardContainer">
-                    <div style="text-align:center; padding:40px 0; color:var(--text-muted); font-size:13px;">
+                    <div style="text-align:center; padding:40px 0; color:var(--text-3); font-size:13px;">
                         در حال محاسبه امتیازات…
                     </div>
                 </div>
@@ -264,7 +283,7 @@
             <!-- تب چالش -->
             <div class="tab-panel" id="panel-challenge">
                 <div id="challengeLeaderboardContainer">
-                    <div style="text-align:center; padding:40px 0; color:var(--text-muted); font-size:13px;">
+                    <div style="text-align:center; padding:40px 0; color:var(--text-3); font-size:13px;">
                         در حال بارگذاری چالش…
                     </div>
                 </div>
@@ -273,7 +292,7 @@
             <!-- تب پیش‌بینی‌ها -->
             <div class="tab-panel" id="panel-predictions">
                 <div id="usersPredictionsContainer">
-                    <div style="text-align:center; padding:40px 0; color:var(--text-muted); font-size:13px;">
+                    <div style="text-align:center; padding:40px 0; color:var(--text-3); font-size:13px;">
                         در حال بارگذاری…
                     </div>
                 </div>
@@ -297,7 +316,7 @@
         // ── استایل دکمه‌های رتبه‌بندی بازی ──
         (function() {
             var s = document.createElement('style');
-            s.textContent = `.match-rank-btn{transition:all 0.15s;} .match-rank-btn.active{background:rgba(255,59,78,0.2)!important;color:var(--accent)!important;border-color:rgba(255,59,78,0.5)!important;box-shadow:0 0 0 1px rgba(255,59,78,0.2);}`;
+            s.textContent = `.match-rank-btn{transition:all 0.15s;} .match-rank-btn.active{background:rgba(255,59,78,0.2)!important;color:var(--pink)!important;border-color:rgba(255,59,78,0.5)!important;box-shadow:0 0 0 1px rgba(255,59,78,0.2);}`;
             document.head.appendChild(s);
         })();
 
@@ -319,7 +338,7 @@
 
             var match = d.matches.find(function(m) { return String(m.id) === String(matchId); });
             if (!match || match.home_score === null || match.away_score === null) {
-                lbEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">نتیجه این بازی هنوز ثبت نشده است.</p>';
+                lbEl.innerHTML = '<p style="text-align:center;color:var(--text-3);padding:20px;">نتیجه این بازی هنوز ثبت نشده است.</p>';
                 return;
             }
 
@@ -454,7 +473,7 @@
         async function initResultsPage() {
             var currentLoggedInUser = localStorage.getItem('loggedInUser') || '';
             var currentUserRole = localStorage.getItem('userRole') || 'user';
-            var loadingHtml = '<div style="text-align:center;padding:30px 0;color:var(--text-muted);font-size:13px;">در حال بارگذاری...</div>';
+            var loadingHtml = '<div style="text-align:center;padding:30px 0;color:var(--text-3);font-size:13px;">در حال بارگذاری...</div>';
             var lbEl = document.getElementById('leaderboardContainer');
             var chEl = document.getElementById('challengeLeaderboardContainer');
             var usEl = document.getElementById('usersPredictionsContainer');
@@ -701,7 +720,7 @@
                     }
 
                     if (challengeArray.length === 0) {
-                        chEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:30px 0;">هیچ کاربری در چالش مالی شرکت نکرده است.</p>';
+                        chEl.innerHTML = '<p style="text-align:center;color:var(--text-3);padding:30px 0;">هیچ کاربری در چالش مالی شرکت نکرده است.</p>';
                     } else {
                         challengeArray.forEach(function(item, i) {
                             var rank = i + 1;
@@ -738,7 +757,7 @@
                 if (usEl) {
                     usEl.innerHTML = '';
                     if (users.length === 0) {
-                        usEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:30px 0;">کاربری یافت نشد.</p>';
+                        usEl.innerHTML = '<p style="text-align:center;color:var(--text-3);padding:30px 0;">کاربری یافت نشد.</p>';
                         return;
                     }
 
@@ -791,48 +810,48 @@
                             if (pts === null) return '';
                             var cfg = {
                                 10: {fg:'var(--green)',bg:'rgba(52,211,153,0.15)',br:'rgba(52,211,153,0.3)'},
-                                7:  {fg:'var(--accent)',bg:'rgba(255,59,78,0.15)',br:'rgba(255,59,78,0.3)'},
+                                7:  {fg:'var(--pink)',bg:'rgba(255,59,78,0.15)',br:'rgba(255,59,78,0.3)'},
                                 5:  {fg:'var(--gold)',bg:'rgba(240,192,64,0.15)',br:'rgba(240,192,64,0.3)'},
-                                2:  {fg:'var(--text-muted)',bg:'var(--bg-elevated)',br:'var(--border-subtle)'}
+                                2:  {fg:'var(--text-3)',bg:'var(--card)',br:'var(--border)'}
                             };
                             var c = cfg[pts] || cfg[2];
                             return '<span style="font-size:11px;font-weight:800;color:'+c.fg+';background:'+c.bg+';border:1px solid '+c.br+';padding:3px 9px;border-radius:7px;white-space:nowrap;">⭐ '+pts+' امتیاز</span>';
                         }
 
                         var filterBox = document.createElement('div');
-                        filterBox.style.cssText = 'background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:14px;padding:14px;margin-bottom:18px;';
+                        filterBox.style.cssText = 'background:var(--card);border:1px solid var(--border-2);border-radius:14px;padding:14px;margin-bottom:18px;';
                         filterBox.innerHTML =
                             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
-                                '<div style="font-size:13px;font-weight:800;color:var(--text-primary);">👀 پیش‌بینی‌های این بازی</div>' +
-                                '<button onclick="window._filterMatchId=null;this.closest(\'div[style]\').remove();" style="font-size:11px;background:var(--bg-card);border:1px solid var(--border-subtle);color:var(--text-muted);padding:4px 10px;border-radius:8px;cursor:pointer;font-family:var(--font);">✕ بستن</button>' +
+                                '<div style="font-size:13px;font-weight:800;color:var(--text-1);">👀 پیش‌بینی‌های این بازی</div>' +
+                                '<button onclick="window._filterMatchId=null;this.closest(\'div[style]\').remove();" style="font-size:11px;background:var(--card-2);border:1px solid var(--border);color:var(--text-3);padding:4px 10px;border-radius:8px;cursor:pointer;font-family:var(--font);">✕ بستن</button>' +
                             '</div>' +
                             '<div style="background:var(--gold-dim);border:1px dashed rgba(240,192,64,0.25);border-radius:10px;padding:10px 12px;margin-bottom:10px;text-align:center;">' +
                                 '<div style="font-size:10px;color:var(--gold);opacity:0.8;margin-bottom:4px;">نتیجه واقعی</div>' +
-                                '<div style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px;font-weight:800;color:var(--text-primary);">' +
+                                '<div style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px;font-weight:800;color:var(--text-1);">' +
                                     '<span>'+fHome+'</span><span style="color:var(--gold);">'+fRealH+' – '+fRealA+'</span><span>'+fAway+'</span>' +
                                 '</div>' +
                             '</div>' +
                             sortedG3.map(function(g) {
-                                return '<div style="margin-bottom:10px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:10px;overflow:hidden;">' +
-                                    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,59,78,0.06);border-bottom:1px solid var(--border-subtle);">' +
-                                        '<span style="font-size:13px;font-weight:800;color:var(--accent);display:flex;align-items:center;gap:6px;">' +
-                                            '<span style="font-size:10px;color:var(--text-muted);font-weight:600;">'+fHome+'</span>' +
+                                return '<div style="margin-bottom:10px;background:var(--card-2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">' +
+                                    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,59,78,0.06);border-bottom:1px solid var(--border);">' +
+                                        '<span style="font-size:13px;font-weight:800;color:var(--pink);display:flex;align-items:center;gap:6px;">' +
+                                            '<span style="font-size:10px;color:var(--text-3);font-weight:600;">'+fHome+'</span>' +
                                             '<span>'+g.home+' – '+g.away+'</span>' +
-                                            '<span style="font-size:10px;color:var(--text-muted);font-weight:600;">'+fAway+'</span>' +
+                                            '<span style="font-size:10px;color:var(--text-3);font-weight:600;">'+fAway+'</span>' +
                                         '</span>' +
                                         ptsBadge3(g.points) +
                                     '</div>' +
                                     '<div style="padding:8px 12px;display:flex;flex-direction:column;gap:6px;">' +
-                                        g.users.map(function(u) { return '<span style="font-size:13px;color:var(--text-primary);font-weight:600;">👤 '+u+'</span>'; }).join('') +
+                                        g.users.map(function(u) { return '<span style="font-size:13px;color:var(--text-1);font-weight:600;">👤 '+u+'</span>'; }).join('') +
                                     '</div>' +
                                 '</div>';
                             }).join('') +
                             (notPred3.length > 0 ?
-                                '<div style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:10px;overflow:hidden;">' +
-                                '<div style="padding:8px 12px;background:rgba(248,113,113,0.06);border-bottom:1px solid var(--border-subtle);">' +
+                                '<div style="background:var(--card-2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">' +
+                                '<div style="padding:8px 12px;background:rgba(248,113,113,0.06);border-bottom:1px solid var(--border);">' +
                                     '<span style="font-size:12px;font-weight:800;color:var(--red);">پیش‌بینی نکرده‌اند</span></div>' +
                                 '<div style="padding:8px 12px;display:flex;flex-direction:column;gap:6px;">' +
-                                    notPred3.map(function(u) { return '<span style="font-size:13px;color:var(--text-muted);font-weight:600;">👤 '+u+'</span>'; }).join('') +
+                                    notPred3.map(function(u) { return '<span style="font-size:13px;color:var(--text-3);font-weight:600;">👤 '+u+'</span>'; }).join('') +
                                 '</div></div>' : ''
                             );
                         usEl.appendChild(filterBox);
@@ -879,7 +898,7 @@
                                 fHead.className = 'inner-folder-head';
                                 fHead.innerHTML =
                                     '<span>📁 ' + folder.name + '</span>' +
-                                    '<span style="font-size:11px;color:var(--text-muted);">' + (isFolderOpen ? '▴ بستن' : '▾ باز کردن') + '</span>';
+                                    '<span style="font-size:11px;color:var(--text-3);">' + (isFolderOpen ? '▴ بستن' : '▾ باز کردن') + '</span>';
                                 fHead.addEventListener('click', function(e) { e.stopPropagation(); toggleFolderAccordion(folderKey); });
 
                                 var fBody = document.createElement('div');
@@ -925,15 +944,15 @@
                                     var predHtml;
                                     if (!canSeePred) {
                                         // زمان بازی نرسیده و این کاربر دیگری است
-                                        predHtml = '<div style="font-size:10px;color:var(--text-muted);background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:6px;padding:4px 8px;">🔒 قبل از بازی</div>';
+                                        predHtml = '<div style="font-size:10px;color:var(--text-3);background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 8px;">🔒 قبل از بازی</div>';
                                     } else if (hasPred) {
-                                        predHtml = '<div class="pred-score user-pred"><span>' + pred.home_prediction + '</span><span style="color:var(--text-muted)">-</span><span>' + pred.away_prediction + '</span></div><div class="pred-label">پیش‌بینی</div>' + matchPointsBadge;
+                                        predHtml = '<div class="pred-score user-pred"><span>' + pred.home_prediction + '</span><span style="color:var(--text-3)">-</span><span>' + pred.away_prediction + '</span></div><div class="pred-label">پیش‌بینی</div>' + matchPointsBadge;
                                     } else {
                                         predHtml = '<div class="no-pred-badge">ثبت نشده</div>';
                                     }
                                     var realHtml = realH !== '—'
-                                        ? '<div class="pred-score real-score"><span>' + realH + '</span><span style="color:var(--text-muted)">-</span><span>' + realA + '</span></div><div class="pred-label">نتیجه واقعی</div>'
-                                        : '<div style="font-size:10px;color:var(--text-muted);">در انتظار</div>';
+                                        ? '<div class="pred-score real-score"><span>' + realH + '</span><span style="color:var(--text-3)">-</span><span>' + realA + '</span></div><div class="pred-label">نتیجه واقعی</div>'
+                                        : '<div style="font-size:10px;color:var(--text-3);">در انتظار</div>';
 
                                     matchRow.innerHTML =
                                         '<span class="pred-team right">' + homeName + '</span>' +

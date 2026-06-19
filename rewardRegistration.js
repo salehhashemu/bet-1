@@ -97,7 +97,7 @@ function renderRewardBox(userStatus) {
         styleTag.id = 'rewardBoxStyles';
         styleTag.innerHTML = `
             .reward-box {
-                background: rgba(30,41,59,0.4) !important;
+                background: rgba(13,13,20,0.8) !important;
                 backdrop-filter: blur(16px) !important;
                 border: 1px solid rgba(255,255,255,0.1) !important;
                 border-radius: 16px !important;
@@ -110,7 +110,7 @@ function renderRewardBox(userStatus) {
             }
             .reward-title {
                 font-size: 16px !important; font-weight: bold !important;
-                color: #38bdf8 !important; margin-bottom: 10px !important;
+                color: var(--pink) !important; margin-bottom: 10px !important;
                 display: flex; align-items: center; gap: 8px;
             }
             .reward-law-text {
@@ -123,14 +123,14 @@ function renderRewardBox(userStatus) {
                 cursor: pointer; user-select: none; margin-bottom: 15px;
             }
             .switch-container.disabled { cursor: not-allowed; opacity: 0.6; }
-            .reward-checkbox { width: 20px; height: 20px; cursor: pointer; accent-color: #38bdf8; }
+            .reward-checkbox { width: 20px; height: 20px; cursor: pointer; accent-color: var(--pink); }
             .reward-checkbox:disabled { cursor: not-allowed; opacity: 0.5; }
             .card-input-container { position: relative; display: flex; align-items: center; width: 100%; }
             .card-input-wrapper { display: block; transition: all 0.3s ease; max-height: 0; overflow: hidden; opacity: 0; }
             .card-input-wrapper.show { max-height: 150px; opacity: 1; margin-top: 10px; }
             .card-input {
                 width: 100%;
-                background: rgba(15,23,42,0.6) !important;
+                background: var(--black-2) !important;
                 border: 1px solid rgba(255,255,255,0.2) !important;
                 border-radius: 8px !important;
                 padding: 10px 45px 10px 12px !important;
@@ -138,10 +138,10 @@ function renderRewardBox(userStatus) {
                 font-family: monospace !important;
                 letter-spacing: 2px; text-align: center; font-size: 16px !important; outline: none;
             }
-            .card-input:focus { border-color: #38bdf8 !important; }
+            .card-input:focus { border-color: var(--pink) !important; }
             .card-input:disabled { background: rgba(15,23,42,0.3) !important; color: #64748b !important; cursor: not-allowed; }
             .btn-save-reward {
-                background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%) !important;
+                background: linear-gradient(135deg, var(--pink) 0%, var(--pink-light) 100%) !important;
                 color: white !important; border: none !important;
                 padding: 8px 16px !important; border-radius: 8px !important;
                 font-size: 13px !important; font-weight: bold !important;
