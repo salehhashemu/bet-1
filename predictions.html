@@ -249,13 +249,10 @@
                 <!-- انتخاب‌گر رتبه‌بندی بر اساس بازی -->
                 <div id="matchRankingSelector" style="margin-bottom:14px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:14px;padding:12px 14px;">
                     <div style="font-size:12px;font-weight:800;color:var(--text-primary);margin-bottom:10px;">🎯 رتبه‌بندی بر اساس بازی</div>
-                    <div id="matchRankingBtns" style="display:flex;flex-wrap:wrap;gap:6px;">
-                        <button id="btnRankAll" class="match-rank-btn active" onclick="showMatchRanking('all')"
-                            style="padding:6px 14px;border-radius:20px;border:1px solid rgba(99,133,255,0.4);background:rgba(99,133,255,0.15);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all 0.15s;">
-                            🏆 رتبه‌بندی کل
-                        </button>
-                        <div id="perMatchBtns" style="display:contents;"></div>
-                    </div>
+                    <select id="matchRankingSelect" onchange="showMatchRanking(this.value)"
+                        style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(99,133,255,0.4);background:rgba(99,133,255,0.12);color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2214%22 height=%2214%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236385ff%22 stroke-width=%222.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><polyline points=%226 9 12 15 18 9%22></polyline></svg>');background-repeat:no-repeat;background-position:left 14px center;">
+                        <option value="all">🏆 رتبه‌بندی کل</option>
+                    </select>
                 </div>
                 <div id="leaderboardContainer">
                     <div style="text-align:center; padding:40px 0; color:var(--text-muted); font-size:13px;">
@@ -660,19 +657,17 @@
                     scoreIdx: scoreIdx
                 };
 
-                // ─── ساخت دکمه‌های رتبه‌بندی بازی ───
-                var perMatchBtns = document.getElementById('perMatchBtns');
-                if (perMatchBtns) {
-                    perMatchBtns.innerHTML = '';
-                    var settledForBtns = matches.filter(function(m) { return m.home_score !== null && m.away_score !== null; });
+                // ─── ساخت گزینه‌های کشویی رتبه‌بندی بازی ───
+                var matchRankingSelect = document.getElementById('matchRankingSelect');
+                if (matchRankingSelect) {
+                    matchRankingSelect.innerHTML = '<option value="all">🏆 رتبه‌بندی کل</option>';
+                    var settledForBtns = matches.filter(function(m) { return m.home_score !== null && m.away_score !== null; })
+                        .sort(function(a, b) { return Number(a.id) - Number(b.id); });
                     settledForBtns.forEach(function(m, idx) {
-                        var btn = document.createElement('button');
-                        btn.id = 'btnRankM' + m.id;
-                        btn.className = 'match-rank-btn';
-                        btn.style.cssText = 'padding:5px 13px;border-radius:20px;border:1px solid var(--border-subtle);background:var(--bg-elevated);color:var(--text-muted);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;';
-                        btn.textContent = 'بازی ' + (idx + 1);
-                        btn.setAttribute('onclick', 'showMatchRanking("' + m.id + '")');
-                        perMatchBtns.appendChild(btn);
+                        var opt = document.createElement('option');
+                        opt.value = m.id;
+                        opt.textContent = 'بازی ' + (idx + 1);
+                        matchRankingSelect.appendChild(opt);
                     });
                 }
 
@@ -953,7 +948,7 @@
 
             } catch (err) {
                 console.error('خطا در بارگذاری نتایج:', err);
-                var errHtml = '<p style="text-align:center;color:#ff3b30;padding:20px;font-size:13px;">⚠️ خطا: ' + err.message + '</p>';
+                var errHtml = '<p style="text-align:center;color:#ff3b30;padding:20px;font-size:13px;">⚠��� خطا: ' + err.message + '</p>';
                 if (lbEl) lbEl.innerHTML = errHtml;
                 if (chEl) chEl.innerHTML = errHtml;
                 if (usEl) usEl.innerHTML = errHtml;
