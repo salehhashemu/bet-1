@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>امتیازات — جام جهانی ۲۰۲۶</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* ─── هدر ─── */
+        .app-header .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .back-btn-inline {
+            height: 34px;
+            border-radius: 999px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 700;
+            padding: 0 16px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            font-family: var(--font);
+            transition: all 0.18s;
+        }
+        .back-btn-inline:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+        /* ─── تب‌ها ─── */
+        .scores-tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-elevated);
+            border-radius: var(--radius-md);
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+        .scores-tab-btn {
+            flex: 1;
+            padding: 10px 6px;
+            border: none;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 600;
+            font-family: var(--font);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .scores-tab-btn.active {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .scores-tab-panel { display: none; }
+        .scores-tab-panel.active { display: block; }
+
+        /* ─── جداول ─── */
+        .score-table-section { margin-bottom: 20px; }
+        .score-table-header {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 14px;
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+            font-size: 13px; font-weight: 800;
+        }
+        .score-table-header.h10 { background: rgba(52,211,153,0.15); color: var(--green); border: 1px solid rgba(52,211,153,0.25); }
+        .score-table-header.h7  { background: rgba(99,133,255,0.15); color: var(--accent); border: 1px solid rgba(99,133,255,0.25); }
+        .score-table-header.h5  { background: rgba(240,192,64,0.15); color: var(--gold); border: 1px solid rgba(240,192,64,0.25); }
+        .score-table-header.h2  { background: rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid var(--border-subtle); }
+        .score-table-header.hnp { background: rgba(248,113,113,0.12); color: var(--red); border: 1px solid rgba(248,113,113,0.25); }
+        .score-table-body { border: 1px solid var(--border-subtle); border-top: none; border-radius: 0 0 var(--radius-md) var(--radius-md); overflow: hidden; }
+        .score-row {
+            display: grid;
+            grid-template-columns: 32px 1fr 70px 70px;
+            align-items: center; padding: 10px 14px;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 12px; gap: 8px;
+        }
+        .score-row:last-child { border-bottom: none; }
+        .score-row:nth-child(even) { background: var(--bg-card); }
+        .score-row.is-me { background: var(--gold-dim) !important; }
+        .rank-badge {
+            width: 26px; height: 26px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 800;
+            background: var(--bg-card); color: var(--text-muted);
+            border: 1px solid var(--border-subtle); flex-shrink: 0;
+        }
+        .rank-badge.r1 { background: rgba(240,192,64,0.2); color: var(--gold); border-color: rgba(240,192,64,0.4); }
+        .rank-badge.r2 { background: rgba(180,180,200,0.15); color: #c0c0d0; border-color: rgba(180,180,200,0.3); }
+        .rank-badge.r3 { background: rgba(205,127,50,0.15); color: #cd7f32; border-color: rgba(205,127,50,0.3); }
+        .score-row-name { font-size: 13px; font-weight: 600; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .score-row-name.is-me { color: var(--gold); }
+        .score-row-count { text-align: center; font-size: 12px; color: var(--text-muted); font-weight: 600; }
+        .score-row-pts { text-align: center; font-size: 13px; font-weight: 800; }
+        .pts10 { color: var(--green); } .pts7 { color: var(--accent); }
+        .pts5  { color: var(--gold);  } .pts2 { color: var(--text-secondary); }
+        .ptsnp { color: var(--red);   }
+        .col-head {
+            display: grid; grid-template-columns: 32px 1fr 70px 70px;
+            padding: 6px 14px; font-size: 10px; font-weight: 700;
+            color: var(--text-muted); gap: 8px;
+            background: var(--bg-card); border-bottom: 1px solid var(--border-subtle);
+        }
+        .col-head span:nth-child(3), .col-head span:nth-child(4) { text-align: center; }
+        .empty-table { padding: 20px; text-align: center; color: var(--text-muted); font-size: 12px; background: var(--bg-elevated); }
+
+        /* ─── کپی‌کار ─── */
+        .copycat-sort-toggle {
+            display: flex; gap: 6px; margin-bottom: 4px; flex-wrap: wrap;
+        }
+        .copycat-sort-btn {
+            flex: 1; min-width: 120px;
+            padding: 9px 8px;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            background: var(--bg-elevated);
+            color: var(--text-muted);
+            font-size: 12px; font-weight: 700;
+            font-family: var(--font);
+            cursor: pointer; transition: all 0.18s;
+        }
+        .copycat-sort-btn.active {
+            background: var(--accent-dim);
+            color: var(--accent);
+            border-color: rgba(99,133,255,0.35);
+        }
+        .copycat-pair {
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            margin-bottom: 12px;
+            overflow: hidden;
+            background: var(--bg-elevated);
+        }
+        .copycat-pair-header {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .copycat-names { flex: 1; font-size: 13px; font-weight: 700; color: var(--text-primary); }
+        .copycat-badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+        .copycat-count-badge {
+            font-size: 11px; font-weight: 800; color: var(--accent);
+            background: rgba(99,133,255,0.12); border: 1px solid rgba(99,133,255,0.25);
+            padding: 3px 9px; border-radius: 20px; white-space: nowrap;
+        }
+        .copycat-rate-badge {
+            font-size: 11px; font-weight: 800; color: var(--green);
+            background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.25);
+            padding: 3px 9px; border-radius: 20px; white-space: nowrap;
+        }
+        .copycat-rate-badge.na {
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-subtle);
+        }
+        .copycat-matches { padding: 4px 14px 8px; }
+        .copycat-match-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            padding: 6px 0; font-size: 12px; color: var(--text-secondary);
+            border-bottom: 1px dashed var(--border-subtle);
+        }
+        .copycat-match-row:last-child { border-bottom: none; }
+        .copycat-match-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .copycat-score {
+            font-weight: 800; color: var(--gold);
+            background: rgba(240,192,64,0.1); border-radius: 8px; padding: 2px 9px;
+        }
+        .copycat-pts-badge {
+            font-size: 10px; font-weight: 800; border-radius: 8px; padding: 2px 8px;
+            white-space: nowrap; background: rgba(255,255,255,0.05); border: 1px solid var(--border-subtle);
+        }
+        .copycat-pts-badge.pts10 { color: var(--green); background: rgba(52,211,153,0.12); border-color: rgba(52,211,153,0.25); }
+        .copycat-pts-badge.pts7  { color: var(--accent); background: rgba(99,133,255,0.12); border-color: rgba(99,133,255,0.25); }
+        .copycat-pts-badge.pts5  { color: var(--gold); background: rgba(240,192,64,0.12); border-color: rgba(240,192,64,0.25); }
+        .copycat-pts-badge.pts2  { color: var(--text-secondary); }
+        .copycat-pts-badge.pending { color: var(--text-muted); }
+
+        /* ─── نمودار مشترک ─── */
+        .chart-block { margin-bottom: 28px; }
+        .chart-title {
+            font-size: 13px; font-weight: 800; color: var(--text-primary);
+            margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+            justify-content: space-between;
+        }
+        .chart-title-label { display: flex; align-items: center; gap: 6px; }
+        .chart-zoom-controls { display: flex; gap: 4px; }
+        .chart-zoom-btn {
+            width: 24px; height: 24px; border-radius: 6px;
+            background: var(--bg-card); border: 1px solid var(--border-subtle);
+            color: var(--text-secondary); font-size: 14px; font-weight: 800;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-family: var(--font); line-height: 1; padding: 0;
+            transition: all 0.15s;
+        }
+        .chart-zoom-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .chart-scroll-wrapper {
+            overflow-x: auto;
+            display: flex;
+            align-items: flex-start;
+            direction: ltr;
+            border-radius: var(--radius-md);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            padding: 14px 8px 8px;
+        }
+        .chart-yaxis-sticky {
+            position: sticky;
+            left: 0;
+            z-index: 2;
+            flex-shrink: 0;
+            background: var(--bg-elevated);
+        }
+        .chart-desc {
+            font-size: 11px; color: var(--text-muted);
+            text-align: center; margin-top: 8px; line-height: 1.5;
+        }
+
+        /* ─── لگند ─── */
+        .chart-legend {
+            display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px;
+        }
+        .legend-item {
+            display: flex; align-items: center; gap: 5px;
+            font-size: 11px; color: var(--text-secondary);
+            background: var(--bg-elevated);
+            padding: 5px 11px; border-radius: 20px;
+            border: 1px solid var(--border-subtle);
+            cursor: pointer; transition: all 0.18s; user-select: none;
+        }
+        .legend-item.solo { border-color: var(--border-active); color: var(--text-primary); background: var(--bg-card); }
+        .legend-item.faded { opacity: 0.3; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+        /* ─── tooltip ─── */
+        .tooltip-overlay {
+            position: fixed;
+            background: var(--bg-card);
+            border: 1px solid var(--border-mid);
+            border-radius: 10px; padding: 8px 12px;
+            font-size: 12px; color: var(--text-primary);
+            pointer-events: none; z-index: 999; display: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            direction: rtl; max-width: 200px; line-height: 1.6;
+        }
+
+        /* ─── لودینگ ─── */
+        .loading-state { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 40px 20px; color: var(--text-muted); font-size: 13px; }
+        .spinner { width: 20px; height: 20px; border: 2px solid var(--border-subtle); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+<div class="mobile-container">
+    <header class="app-header">
+        <div class="header-inner">
+            <h1>🏅 امتیازات</h1>
+            <button class="back-btn-inline" onclick="history.back()">بازگشت</button>
+        </div>
+    </header>
+
+    <main class="app-content">
+
+        <div class="scores-tabs">
+            <button class="scores-tab-btn active" data-tab="tables">📊 جداول</button>
+            <button class="scores-tab-btn"        data-tab="chart">📈 نمودارها</button>
+        </div>
+
+        <!-- ═══ تب جداول ═══ -->
+        <div class="scores-tab-panel active" id="tab-tables">
+            <div id="tablesContainer">
+                <div class="loading-state"><div class="spinner"></div> در حال بارگذاری…</div>
+            </div>
+        </div>
+
+        <!-- ═══ تب نمودار ═══ -->
+        <div class="scores-tab-panel" id="tab-chart">
+            <div id="chartContainer">
+                <div class="loading-state"><div class="spinner"></div> در حال بارگذاری…</div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<div class="tooltip-overlay" id="chartTooltip"></div>
+
+<script>
+// ══════════════════════════════════════════
+// Supabase
+// ══════════════════════════════════════════
+const SUPABASE_URL = "https://rzvuvrfrkbsthzzimbce.supabase.co";
+const SUPABASE_KEY = "sb_publishable_La0ndqo_3bHPHl-HKXtkBw_aZ74Kip2";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const ME = localStorage.getItem('loggedInUser') || '';
+
+// ══════════════════════════════════════════
+// رنگ کاربران
+// ══════════════════════════════════════════
+const PALETTE = [
+    '#6385ff','#34d399','#f0c040','#f87171','#a78bfa',
+    '#fb923c','#38bdf8','#f472b6','#4ade80','#facc15',
+    '#e879f9','#2dd4bf','#fb7185','#60a5fa','#c084fc',
+    '#fbbf24','#00e5cc','#94a3b8'
+];
+const _colorMap = {};
+function colorFor(u) {
+    if (!_colorMap[u]) { _colorMap[u] = PALETTE[Object.keys(_colorMap).length % PALETTE.length]; }
+    return _colorMap[u];
+}
+
+// ══════════════════════════════════════════
+// امتیاز
+// ══════════════════════════════════════════
+function calcPoints(prH, prA, reH, reA) {
+    if ([prH,prA,reH,reA].some(isNaN)) return null;
+    const rW = reH>reA?1:(reA>reH?2:0), pW = prH>prA?1:(prA>prH?2:0);
+    if (prH===reH && prA===reA) return 10;
+    if (rW===pW && (reH-reA)===(prH-prA)) return 7;
+    if (rW===pW) return 5;
+    return 2;
+}
+
+// ══════════════════════════════════════════
+// تب‌ها
+// ══════════════════════════════════════════
+let _copycatLoaded = false;
+document.querySelectorAll('.scores-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.scores-tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.scores-tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        if (btn.dataset.tab === 'copycat' && !_copycatLoaded) {
+            _copycatLoaded = true;
+            initCopycat();
+        }
+    });
+});
+
+// ══════════════════════════════════════════
+// دریافت داده
+// ══════════════════════════════════════════
+let _cachedData = null;
+async function loadData() {
+    if (_cachedData) return _cachedData;
+    const [
+        { data: users },
+        { data: matches },
+        { data: predictions },
+        { data: teams }
+    ] = await Promise.all([
+        supabaseClient.from('project_users').select('username').order('username'),
+        supabaseClient.from('matches').select('*').order('id'),
+        supabaseClient.from('predictions').select('*'),
+        supabaseClient.from('teams').select('*')
+    ]);
+    _cachedData = { users: users||[], matches: matches||[], predictions: predictions||[], teams: teams||[] };
+    return _cachedData;
+}
+
+// ══════════════════════════════════════════
+// تب ۱: جداول
+// ══════════════════════════════════════════
+async function initTables() {
+    const container = document.getElementById('tablesContainer');
+    try {
+        const { users, matches, predictions } = await loadData();
+        const settled = matches.filter(m => m.home_score!==null && m.away_score!==null);
+        // ─── ایندکس پیش‌بینی‌ها: فقط رکوردهای معتبر (نه null، نه خالی، نه sentinel 99) ───
+        const SENTINEL = '99';
+        const isValidPred = p => p &&
+            p.home_prediction !== null && p.away_prediction !== null &&
+            p.home_prediction !== '' && p.away_prediction !== '' &&
+            !(String(p.home_prediction) === SENTINEL && String(p.away_prediction) === SENTINEL);
+
+        // برای هر username_matchId فقط اولین رکورد معتبر نگه می‌داریم
+        const predIdx = {};
+        predictions
+            .filter(p => isValidPred(p))
+            .sort((a, b) => Number(a.id) - Number(b.id))
+            .forEach(p => {
+                const key = p.username + '_' + p.match_id;
+                if (!predIdx[key]) predIdx[key] = p;
+            });
+
+        const stats = {};
+        users.forEach(u => { stats[u.username] = {cnt10:0,pts10:0,cnt7:0,pts7:0,cnt5:0,pts5:0,cnt2:0,pts2:0,notPred:0}; });
+
+        settled.forEach(m => {
+            const rH=parseInt(m.home_score), rA=parseInt(m.away_score);
+            users.forEach(u => {
+                const s = stats[u.username];
+                const p = predIdx[u.username + '_' + m.id];
+                if (!p) { s.notPred++; return; }
+                const prH = parseInt(p.home_prediction), prA = parseInt(p.away_prediction);
+                if (isNaN(prH) || isNaN(prA)) { s.notPred++; return; }
+                const pts = calcPoints(prH, prA, rH, rA);
+                if (pts===10) { s.cnt10++; s.pts10+=10; }
+                else if (pts===7) { s.cnt7++; s.pts7+=7; }
+                else if (pts===5) { s.cnt5++; s.pts5+=5; }
+                else if (pts===2) { s.cnt2++; s.pts2+=2; }
+            });
+        });
+
+        const tables = [
+            { key:'10', label:'۱۰ امتیازی', icon:'🟢', cls:'h10', ptsCls:'pts10', desc:'نتیجه دقیق هر دو تیم',   get:(s)=>({count:s.cnt10,total:s.pts10}) },
+            { key:'7',  label:'۷ امتیازی',  icon:'🔵', cls:'h7',  ptsCls:'pts7',  desc:'اختلاف گل دقیق',        get:(s)=>({count:s.cnt7, total:s.pts7 }) },
+            { key:'5',  label:'۵ امتیازی',  icon:'🟡', cls:'h5',  ptsCls:'pts5',  desc:'فقط برنده درست',        get:(s)=>({count:s.cnt5, total:s.pts5 }) },
+            { key:'2',  label:'۲ امتیازی',  icon:'⚪', cls:'h2',  ptsCls:'pts2',  desc:'نتیجه اشتباه',          get:(s)=>({count:s.cnt2, total:s.pts2 }) },
+            { key:'np', label:'پیش‌بینی نکرده',icon:'🔴',cls:'hnp',ptsCls:'ptsnp',desc:'بازی‌های بدون پیش‌بینی پس از اعلام نتیجه', get:(s)=>({count:s.notPred,total:0}) },
+        ];
+
+        let html = '';
+        tables.forEach(t => {
+            const isNp = t.key==='np';
+            const rows = users.map(u=>({username:u.username,...t.get(stats[u.username])}))
+                .filter(r=>r.count>0)
+                .sort((a,b)=> {
+                    if (t.key === '2') return isNp ? b.count-a.count : a.total-b.total; // ۲ امتیازی: کمترین = بهتر
+                    return isNp?b.count-a.count:b.total-a.total;
+                });
+            html += `
+            <div class="score-table-section">
+                <div class="score-table-header ${t.cls}">${t.icon} جدول ${t.label}<span style="font-size:10px;opacity:0.7;font-weight:500;margin-right:6px;">${t.desc}</span></div>
+                <div class="score-table-body">
+                    <div class="col-head"><span>رتبه</span><span>نام</span><span>تعداد</span><span>${isNp?'':' امتیاز'}</span></div>
+                    ${rows.length===0
+                        ? `<div class="empty-table">هنوز کسی در این دسته ثبت نشده</div>`
+                        : rows.map((r,i)=>{
+                            const rc=i===0?'r1':i===1?'r2':i===2?'r3':'';
+                            const im=r.username===ME;
+                            return `<div class="score-row${im?' is-me':''}">
+                                <div class="rank-badge ${rc}">${i+1}</div>
+                                <div class="score-row-name${im?' is-me':''}">${im?'⭐ ':''}${r.username}</div>
+                                <div class="score-row-count">${r.count}</div>
+                                <div class="score-row-pts ${t.ptsCls}">${isNp?'':r.total}</div>
+                            </div>`;
+                        }).join('')
+                    }
+                </div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    } catch(err) {
+        container.innerHTML = `<p style="color:var(--red);padding:20px;text-align:center;">خطا: ${err.message}</p>`;
+    }
+}
+
+// ══════════════════════════════════════════
+// داده نمودارها
+// ══════════════════════════════════════════
+let _chartUsers = [];  // {username, visible}
+let _chartReady = false;
+// سری‌های داده
+let _seriesPerMatch  = {};  // username -> [{pts, notPred}]  (نمودار ۱)
+let _seriesByDay     = {};  // username -> [{day, cumScore}]  (نمودار ۳: رشد تجمعی روزانه)
+let _seriesRank      = {};  // username -> [{day, rank}]      (نمودار ۲: رتبه روزانه)
+let _seriesDailyPts  = {};  // username -> [pts per day]      (نمودار ۴: امتیاز روزانه)
+let _dailyDates      = [];  // تاریخ‌های یکتای بازی‌های تعیین‌شده
+let _settledMatches  = [];
+let _matchLabels     = [];  // برچسب شماره بازی برای محور X نمودار ۲ و ۳
+// وضعیت مقایسه نمودار روزانه
+let _dailyCompareUser = null;
+
+async function initChart() {
+    const container = document.getElementById('chartContainer');
+    try {
+        const { users, matches, predictions } = await loadData();
+        const settled = matches.filter(m=>m.home_score!==null&&m.away_score!==null).sort((a,b)=>a.id-b.id);
+        _settledMatches = settled;
+
+        if (settled.length===0) {
+            container.innerHTML='<p style="color:var(--text-muted);padding:30px;text-align:center;">هنوز نتیجه‌ای ثبت نشده است.</p>';
+            return;
+        }
+
+        // ─── ایندکس پیش‌بینی‌های معتبر (نه null، نه خالی، نه sentinel 99) ───
+        const SENTINEL_C = '99';
+        const isValidC = p => p &&
+            p.home_prediction !== null && p.away_prediction !== null &&
+            p.home_prediction !== '' && p.away_prediction !== '' &&
+            !(String(p.home_prediction) === SENTINEL_C && String(p.away_prediction) === SENTINEL_C);
+        const predIdx = {};
+        predictions
+            .filter(p => isValidC(p))
+            .sort((a, b) => Number(a.id) - Number(b.id))
+            .forEach(p => {
+                const key = p.username + '_' + p.match_id;
+                if (!predIdx[key]) predIdx[key] = p;
+            });
+
+        // اطمینان از رنگ
+        users.forEach(u=>colorFor(u.username));
+        _chartUsers = users.map(u=>({username:u.username, visible:true}));
+
+        // ─── نمودار ۱: امتیاز هر بازی ───
+        _seriesPerMatch = {};
+        users.forEach(u=>{
+            _seriesPerMatch[u.username] = settled.map(m=>{
+                const p = predIdx[u.username + '_' + m.id];
+                if (!p) return {pts:0, notPred:true};
+                const prH=parseInt(p.home_prediction), prA=parseInt(p.away_prediction);
+                if (isNaN(prH)||isNaN(prA)) return {pts:0, notPred:true};
+                const pts = calcPoints(prH,prA,parseInt(m.home_score),parseInt(m.away_score)) ?? 0;
+                return {pts, notPred:false};
+            });
+        });
+
+        // ─── محور افق نمودار ۲ و ۳: بر اساس تعداد بازی‌های تعیین‌شده توسط مدیر ───
+        // هر بازی تعیین‌شده (نتیجه‌دار) = یک نقطه روی محور افق
+        _matchLabels = settled.map((m, i) => String(i + 1));
+
+        // امتیاز تجمعی هر کاربر تا پایان هر بازی
+        const cumByMatch = {};  // username -> [cumScore per settled match]
+        users.forEach(u=>{ cumByMatch[u.username]=[]; });
+
+        let running = {};
+        users.forEach(u=>{ running[u.username]=0; });
+
+        settled.forEach(m=>{
+            users.forEach(u=>{
+                const p = predIdx[u.username + '_' + m.id];
+                if (p) {
+                    const prH=parseInt(p.home_prediction), prA=parseInt(p.away_prediction);
+                    if (!isNaN(prH) && !isNaN(prA)) {
+                        const pts = calcPoints(prH,prA,parseInt(m.home_score),parseInt(m.away_score)) ?? 0;
+                        running[u.username] += pts;
+                    }
+                }
+                cumByMatch[u.username].push(running[u.username]);
+            });
+        });
+
+        // رتبه هر کاربر پس از هر بازی تعیین‌شده
+        _seriesByDay = {};
+        _seriesRank  = {};
+        users.forEach(u=>{ _seriesByDay[u.username]=[]; _seriesRank[u.username]=[]; });
+
+        settled.forEach((m, di)=>{
+            // رتبه‌بندی بر اساس امتیاز تجمعی پس از این بازی
+            const scores = users.map(u=>({username:u.username, cum:cumByMatch[u.username][di]}))
+                .sort((a,b)=>b.cum-a.cum);
+            // اعمال رتبه (تساوی = رتبه یکسان)
+            let rank=1;
+            scores.forEach((s,i)=>{
+                if (i>0 && s.cum<scores[i-1].cum) rank=i+1;
+                _seriesRank[s.username].push(rank);
+            });
+            users.forEach(u=>{ _seriesByDay[u.username].push(cumByMatch[u.username][di]); });
+        });
+
+        // ─── نمودار ۴: امتیاز روزانه (تجمیع بر اساس تاریخ بازی) ───
+        // گروه‌بندی بازی‌های تعیین‌شده بر اساس تاریخ match_date
+        const dateMap = {}; // date_str -> [match, ...]
+        settled.forEach(m => {
+            const d = m.match_date ? String(m.match_date).slice(0,10) : 'unknown';
+            if (!dateMap[d]) dateMap[d] = [];
+            dateMap[d].push(m);
+        });
+        const sortedDates = Object.keys(dateMap).sort();
+        _dailyDates = sortedDates;
+        _seriesDailyPts = {};
+        users.forEach(u => {
+            _seriesDailyPts[u.username] = sortedDates.map(d => {
+                let dayPts = 0;
+                dateMap[d].forEach(m => {
+                    const p = predIdx[u.username + '_' + m.id];
+                    if (!p) return;
+                    const prH=parseInt(p.home_prediction), prA=parseInt(p.away_prediction);
+                    if (isNaN(prH)||isNaN(prA)) return;
+                    dayPts += calcPoints(prH,prA,parseInt(m.home_score),parseInt(m.away_score)) ?? 0;
+                });
+                return dayPts;
+            });
+        });
+
+        _chartReady = true;
+        renderAllCharts(container);
+
+    } catch(err) {
+        container.innerHTML=`<p style="color:var(--red);padding:20px;text-align:center;">خطا: ${err.message}</p>`;
+    }
+}
+
+// ══════════════════════════════════════════
+// لگند مشترک (solo-click)
+// ══════════════════════════════════════════
+function buildLegendHTML(groupId) {
+    return _chartUsers.map(u=>`
+        <div class="legend-item" data-group="${groupId}" data-user="${u.username}"
+            onclick="handleLegendClick('${groupId}','${u.username}')">
+            <div class="legend-dot" style="background:${colorFor(u.username)}"></div>
+            <span>${u.username}</span>
+        </div>`).join('');
+}
+
+// solo-click: کلیک روی کاربر = فقط اون نمایش داده شه، کلیک دوباره = همه برگردن
+const _soloState = {}; // groupId -> username | null
+window.handleLegendClick = function(groupId, username) {
+    if (_soloState[groupId] === username) {
+        // برگشت به حالت همه
+        _soloState[groupId] = null;
+        _chartUsers.forEach(u=>{ u.visible=true; });
+        if (groupId==='daily') { _dailyCompareUser=null; }
+    } else {
+        _soloState[groupId] = username;
+        _chartUsers.forEach(u=>{ u.visible = u.username===username; });
+    }
+    // آپدیت UI مقایسه روزانه
+    if (groupId==='daily') {
+        const ui=document.getElementById('daily-compare-ui');
+        if(ui) ui.innerHTML=buildDailyCompareUI();
+    }
+    // آپدیت لگند همه گروه‌ها
+    ['match','rank','growth','daily'].forEach(g=>{
+        document.querySelectorAll(`.legend-item[data-group="${g}"]`).forEach(el=>{
+            const u = el.dataset.user;
+            const vis = _chartUsers.find(x=>x.username===u)?.visible;
+            el.classList.toggle('solo', _soloState[g]===u);
+            el.classList.toggle('faded', !vis && _soloState[g]!==null);
+        });
+        // آپدیت SVG خطوط
+        updateSvgVisibility(g);
+    });
+};
+
+function updateSvgVisibility(groupId) {
+    const svg = document.getElementById(`svg-${groupId}`);
+    if (!svg) return;
+    svg.querySelectorAll('[data-user-line],[data-user-dot]').forEach(el=>{
+        const u = el.dataset.userLine || el.dataset.userDot;
+        const vis = _chartUsers.find(x=>x.username===u)?.visible;
+        el.style.opacity = vis ? '1' : '0';
+        el.style.pointerEvents = vis ? '' : 'none';
+    });
+}
+
+// ══════════════════════════════════════════
+// زوم نمودارها
+// ══════════════════════════════════════════
+const ZOOM_STEP = 0.2, ZOOM_MIN = 0.6, ZOOM_MAX = 2.4;
+let _zoom = { match: 1, rank: 1, growth: 1, daily: 1 };
+
+window.adjustZoom = function(id, dir) {
+    let z = Math.round((_zoom[id] + dir * ZOOM_STEP) * 100) / 100;
+    z = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+    if (z === _zoom[id]) return;
+    _zoom[id] = z;
+    rerenderChart(id);
+};
+
+function rerenderChart(id) {
+    const wrapper = document.querySelector(`.chart-scroll-wrapper[data-chart="${id}"]`);
+    if (!wrapper) return;
+    const renderFn = { match: renderMatchChart, rank: renderRankChart, growth: renderGrowthChart, daily: renderDailyChart }[id];
+    wrapper.innerHTML = renderFn();
+    const svgEl = document.getElementById(`svg-${id}`);
+    const tip = document.getElementById('chartTooltip');
+    if (svgEl) makeDotEvents(svgEl, tip);
+    updateSvgVisibility(id);
+}
+
+// ══════════════════════════════════════════
+// کمک: ساخت SVG پایه
+// ══════════════════════════════════════════
+function makeSvgBase({id, n, colW, leftPad=10, rightPad=16, topPad=16, botPad=42, height=260}) {
+    const width  = leftPad + n*colW + rightPad;
+    const chartH = height - topPad - botPad;
+    return {
+        id, n, colW, leftPad, rightPad, topPad, botPad, width, height, chartH,
+        xFor: i => leftPad + i*colW + colW/2,
+        open: `<svg id="svg-${id}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" style="min-width:${width}px;height:${height}px;display:block;">
+               <rect width="${width}" height="${height}" fill="transparent"/>`
+    };
+}
+
+// محور Y چسبان که هنگام اسکرول افقی همیشه قابل مشاهده می‌ماند
+function renderYAxisHTML(axisW, height, ticks) {
+    let svg = `<svg viewBox="0 0 ${axisW} ${height}" xmlns="http://www.w3.org/2000/svg" style="width:${axisW}px;height:${height}px;display:block;">`;
+    ticks.forEach(t => {
+        svg += `<text x="${axisW-5}" y="${t.y+3.5}" text-anchor="end" font-size="9"
+            fill="${t.color}" font-family="Vazirmatn,sans-serif" font-weight="${t.weight||'400'}">${t.label}</text>`;
+    });
+    svg += `</svg>`;
+    return `<div class="chart-yaxis-sticky" style="width:${axisW}px;height:${height}px;">${svg}</div>`;
+}
+
+function makeDotEvents(svgEl, tooltipEl) {
+    svgEl.querySelectorAll('[data-user-dot]').forEach(dot=>{
+        const show = (x, y, html) => {
+            tooltipEl.innerHTML = html;
+            tooltipEl.style.display='block';
+            tooltipEl.style.left=(x+14)+'px';
+            tooltipEl.style.top =(y-14)+'px';
+        };
+        dot.addEventListener('mouseenter', e=>{
+            const d=e.target.dataset;
+            show(e.clientX,e.clientY,d.tip);
+        });
+        dot.addEventListener('mousemove', e=>{
+            tooltipEl.style.left=(e.clientX+14)+'px';
+            tooltipEl.style.top =(e.clientY-14)+'px';
+        });
+        dot.addEventListener('mouseleave', ()=>{ tooltipEl.style.display='none'; });
+        dot.addEventListener('click', e=>{
+            const d=e.target.dataset;
+            show(e.clientX,e.clientY,d.tip);
+            setTimeout(()=>{ tooltipEl.style.display='none'; },3000);
+        });
+    });
+}
+
+// ══════════════════════════════════════════
+// نمودار ۱: امتیاز هر بازی
+// ══════════════════════════════════════════
+function renderMatchChart() {
+    const n = _settledMatches.length;
+    const baseColW = Math.max(36, Math.min(60, Math.floor(330/Math.min(n,9))));
+    const colW = Math.round(baseColW * _zoom.match);
+    const axisW = 28;
+    const C = makeSvgBase({id:'match', n, colW});
+    const Y_VALS=[0,2,5,7,10], MAX_Y=10;
+    const yFor = v => C.topPad + C.chartH - (v/MAX_Y)*C.chartH;
+
+    const yAxis = renderYAxisHTML(axisW, C.height, Y_VALS.map(v=>({
+        y: yFor(v), label: v, color:'rgba(255,255,255,0.45)', weight:'600'
+    })));
+
+    let svg = C.open;
+
+    // گرید Y
+    Y_VALS.forEach(v=>{
+        const y=yFor(v);
+        svg+=`<line x1="${C.leftPad}" y1="${y}" x2="${C.width-C.rightPad}" y2="${y}"
+            stroke="${v===0?'rgba(255,255,255,0.15)':'rgba(255,255,255,0.05)'}"
+            stroke-width="${v===0?1.5:1}" stroke-dasharray="${v===0?'none':'4 3'}"/>`;
+    });
+
+    // گرید X + برچسب
+    for(let i=0;i<n;i++){
+        const x=C.xFor(i);
+        svg+=`<line x1="${x}" y1="${C.topPad}" x2="${x}" y2="${C.topPad+C.chartH}" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>`;
+        if(n<=20||i===0||(i+1)%5===0||i===n-1)
+            svg+=`<text x="${x}" y="${C.height-C.botPad+14}" text-anchor="middle" font-size="9"
+                fill="rgba(255,255,255,0.35)" font-family="Vazirmatn,sans-serif">${i+1}</text>`;
+    }
+    svg+=`<line x1="${C.leftPad}" y1="${C.topPad+C.chartH}" x2="${C.width-C.rightPad}" y2="${C.topPad+C.chartH}" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>`;
+    svg+=`<text x="${C.leftPad+(n*colW)/2}" y="${C.height-4}" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.18)" font-family="Vazirmatn,sans-serif">شماره بازی</text>`;
+
+    // خطوط
+    _chartUsers.forEach(u=>{
+        const data=_seriesPerMatch[u.username]; if(!data||!data.length) return;
+        const color=colorFor(u.username);
+        const op=u.visible?'1':'0';
+        let path=`M ${C.xFor(0)} ${yFor(data[0].pts)}`;
+        data.forEach((d,i)=>{ if(i>0) path+=` L ${C.xFor(i)} ${yFor(d.pts)}`; });
+        svg+=`<path data-user-line="${u.username}" d="${path}" stroke="${color}" stroke-width="2"
+            fill="none" stroke-linecap="round" stroke-linejoin="round" style="opacity:${op};transition:opacity 0.2s"/>`;
+        data.forEach((d,i)=>{
+            const x=C.xFor(i),y=yFor(d.pts), r=d.pts===0?2.5:3.5;
+            const tip=d.notPred?`<strong>${u.username}</strong><br>بازی ${i+1}<br>❌ پیش‌بینی نشده`
+                               :`<strong>${u.username}</strong><br>بازی ${i+1}<br>+${d.pts} امتیاز`;
+            svg+=`<circle data-user-dot="${u.username}" cx="${x}" cy="${y}" r="${r}"
+                fill="${d.pts===0?'rgba(255,255,255,0.1)':color}"
+                stroke="${d.pts===0?color:'var(--bg-deep)'}" stroke-width="1.5"
+                data-tip="${tip.replace(/"/g,"'")}" style="cursor:pointer;opacity:${op};transition:opacity 0.2s"/>`;
+        });
+    });
+    svg+=`</svg>`;
+    return yAxis + svg;
+}
+
+
+// ══════════════════════════════════════════
+// نمودار ۲: صدرنشینی (رتبه روزانه)
+// ══════════════════════════════════════════
+function renderRankChart() {
+    const n = _matchLabels.length;
+    if (n===0) return '';
+    const nUsers = _chartUsers.length;
+    const baseColW = Math.max(44, Math.min(80, Math.floor(330/Math.min(n,8))));
+    const colW = Math.round(baseColW * _zoom.rank);
+    const axisW = 26;
+    const C = makeSvgBase({id:'rank', n, colW, height:260, botPad:44});
+    // محور Y: ۱ (بالا) تا nUsers (پایین) — معکوس
+    const MAX_RANK = nUsers;
+    const yFor = r => C.topPad + ((r-1)/(MAX_RANK-1||1))*C.chartH;
+
+    const ticks = [];
+    for(let r=1;r<=MAX_RANK;r++){
+        ticks.push({
+            y: yFor(r), label: r,
+            color: r===1?'rgba(240,192,64,0.7)':'rgba(255,255,255,0.35)',
+            weight: r===1?'800':'400'
+        });
+    }
+    const yAxis = renderYAxisHTML(axisW, C.height, ticks);
+
+    let svg = C.open;
+
+    // گرید Y — یک خط برای هر رتبه
+    for(let r=1;r<=MAX_RANK;r++){
+        const y=yFor(r);
+        svg+=`<line x1="${C.leftPad}" y1="${y}" x2="${C.width-C.rightPad}" y2="${y}"
+            stroke="${r===1?'rgba(240,192,64,0.2)':'rgba(255,255,255,0.04)'}" stroke-width="${r===1?1.5:1}"/>`;
+    }
+
+    // گرید X + برچسب شماره بازی
+    for(let i=0;i<n;i++){
+        const x=C.xFor(i);
+        svg+=`<line x1="${x}" y1="${C.topPad}" x2="${x}" y2="${C.topPad+C.chartH}" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>`;
+        const lbl = _matchLabels[i];
+        if(n<=20||i===0||(i+1)%5===0||i===n-1)
+            svg+=`<text x="${x}" y="${C.height-C.botPad+14}" text-anchor="middle" font-size="9"
+                fill="rgba(255,255,255,0.35)" font-family="Vazirmatn,sans-serif">${lbl}</text>`;
+    }
+    svg+=`<line x1="${C.leftPad}" y1="${C.topPad+C.chartH}" x2="${C.width-C.rightPad}" y2="${C.topPad+C.chartH}" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>`;
+    svg+=`<text x="${C.leftPad+(n*colW)/2}" y="${C.height-4}" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.18)" font-family="Vazirmatn,sans-serif">شماره بازی</text>`;
+
+    // خطوط رتبه
+    _chartUsers.forEach(u=>{
+        const data=_seriesRank[u.username]; if(!data||!data.length) return;
+        const color=colorFor(u.username);
+        const op=u.visible?'1':'0';
+        let path=`M ${C.xFor(0)} ${yFor(data[0])}`;
+        data.forEach((r,i)=>{ if(i>0) path+=` L ${C.xFor(i)} ${yFor(r)}`; });
+        svg+=`<path data-user-line="${u.username}" d="${path}" stroke="${color}" stroke-width="2"
+            fill="none" stroke-linecap="round" stroke-linejoin="round" style="opacity:${op};transition:opacity 0.2s"/>`;
+        data.forEach((r,i)=>{
+            const x=C.xFor(i),y=yFor(r);
+            const tip=`<strong>${u.username}</strong><br>بازی شماره ${_matchLabels[i]||i+1}<br>رتبه: ${r}`;
+            svg+=`<circle data-user-dot="${u.username}" cx="${x}" cy="${y}" r="3.5"
+                fill="${color}" stroke="var(--bg-deep)" stroke-width="1.5"
+                data-tip="${tip.replace(/"/g,"'")}" style="cursor:pointer;opacity:${op};transition:opacity 0.2s"/>`;
+        });
+    });
+    svg+=`</svg>`;
+    return yAxis + svg;
+}
+
+// ══════════════════════════════════════════
+// نمودار ۳: رشد تجمعی امتیاز
+// ══════════════════════════════════════════
+function renderGrowthChart() {
+    const n = _matchLabels.length;
+    if (n===0) return '';
+    const baseColW = Math.max(44, Math.min(80, Math.floor(330/Math.min(n,8))));
+    const colW = Math.round(baseColW * _zoom.growth);
+    const axisW = 32;
+    const C = makeSvgBase({id:'growth', n, colW, height:260, botPad:44});
+
+    // بیشینه امتیاز
+    let maxY=10;
+    _chartUsers.forEach(u=>{ const d=_seriesByDay[u.username]; if(d&&d.length) maxY=Math.max(maxY,d[d.length-1]); });
+    maxY=Math.ceil(maxY/10)*10;
+    const yFor = v => C.topPad + C.chartH - (v/maxY)*C.chartH;
+
+    const ticks = [];
+    for(let v=0;v<=maxY;v+=10){
+        ticks.push({ y: yFor(v), label: v, color:'rgba(255,255,255,0.4)' });
+    }
+    const yAxis = renderYAxisHTML(axisW, C.height, ticks);
+
+    // گرید Y هر ۱۰ تا
+    let svg = C.open;
+    for(let v=0;v<=maxY;v+=10){
+        const y=yFor(v);
+        svg+=`<line x1="${C.leftPad}" y1="${y}" x2="${C.width-C.rightPad}" y2="${y}"
+            stroke="${v===0?'rgba(255,255,255,0.12)':'rgba(255,255,255,0.05)'}" stroke-width="${v===0?1.5:1}" stroke-dasharray="${v===0?'none':'4 3'}"/>`;
+    }
+
+    // گرید X + برچسب شماره بازی
+    for(let i=0;i<n;i++){
+        const x=C.xFor(i);
+        svg+=`<line x1="${x}" y1="${C.topPad}" x2="${x}" y2="${C.topPad+C.chartH}" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>`;
+        const lbl=_matchLabels[i];
+        if(n<=20||i===0||(i+1)%5===0||i===n-1)
+            svg+=`<text x="${x}" y="${C.height-C.botPad+14}" text-anchor="middle" font-size="9"
+                fill="rgba(255,255,255,0.35)" font-family="Vazirmatn,sans-serif">${lbl}</text>`;
+    }
+    svg+=`<line x1="${C.leftPad}" y1="${C.topPad+C.chartH}" x2="${C.width-C.rightPad}" y2="${C.topPad+C.chartH}" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>`;
+    svg+=`<text x="${C.leftPad+(n*colW)/2}" y="${C.height-4}" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.18)" font-family="Vazirmatn,sans-serif">شماره بازی</text>`;
+
+    _chartUsers.forEach(u=>{
+        const data=_seriesByDay[u.username]; if(!data||!data.length) return;
+        const color=colorFor(u.username);
+        const op=u.visible?'1':'0';
+        let path=`M ${C.xFor(0)} ${yFor(data[0])}`;
+        data.forEach((v,i)=>{ if(i>0) path+=` L ${C.xFor(i)} ${yFor(v)}`; });
+        svg+=`<path data-user-line="${u.username}" d="${path}" stroke="${color}" stroke-width="2"
+            fill="none" stroke-linecap="round" stroke-linejoin="round" style="opacity:${op};transition:opacity 0.2s"/>`;
+        data.forEach((v,i)=>{
+            const x=C.xFor(i),y=yFor(v);
+            const tip=`<strong>${u.username}</strong><br>بازی شماره ${_matchLabels[i]||i+1}<br>جمع: ${v} امتیاز`;
+            svg+=`<circle data-user-dot="${u.username}" cx="${x}" cy="${y}" r="3.5"
+                fill="${color}" stroke="var(--bg-deep)" stroke-width="1.5"
+                data-tip="${tip.replace(/"/g,"'")}" style="cursor:pointer;opacity:${op};transition:opacity 0.2s"/>`;
+        });
+    });
+    svg+=`</svg>`;
+    return yAxis + svg;
+}
+
+
+// ══════════════════════════════════════════
+// نمودار ۴: امتیاز روزانه با قابلیت مقایسه دو کاربر
+// ══════════════════════════════════════════
+function renderDailyChart() {
+    const n = _dailyDates.length;
+    if (n===0) return '<p style="color:var(--text-muted);padding:20px;text-align:center;">داده‌ای برای نمایش وجود ندارد.</p>';
+    const baseColW = Math.max(44, Math.min(90, Math.floor(330/Math.min(n,7))));
+    const colW = Math.round(baseColW * _zoom.daily);
+    const axisW = 28;
+    const C = makeSvgBase({id:'daily', n, colW, height:260, botPad:52});
+
+    let maxY = 10;
+    _chartUsers.forEach(u=>{ const d=_seriesDailyPts[u.username]; if(d&&d.length) maxY=Math.max(maxY,...d); });
+    maxY = Math.ceil(maxY/5)*5;
+    const yFor = v => C.topPad + C.chartH - (v/maxY)*C.chartH;
+
+    const ticks = [];
+    for(let v=0;v<=maxY;v+=(maxY<=20?2:maxY<=50?5:10)){
+        ticks.push({y:yFor(v), label:v, color:'rgba(255,255,255,0.4)'});
+    }
+    const yAxis = renderYAxisHTML(axisW, C.height, ticks);
+
+    let svg = C.open;
+    // گرید Y
+    for(let v=0;v<=maxY;v+=(maxY<=20?2:maxY<=50?5:10)){
+        const y=yFor(v);
+        svg+=`<line x1="${C.leftPad}" y1="${y}" x2="${C.width-C.rightPad}" y2="${y}"
+            stroke="${v===0?'rgba(255,255,255,0.15)':'rgba(255,255,255,0.05)'}"
+            stroke-width="${v===0?1.5:1}" stroke-dasharray="${v===0?'none':'4 3'}"/>`;
+    }
+    // گرید X + برچسب تاریخ
+    for(let i=0;i<n;i++){
+        const x=C.xFor(i);
+        svg+=`<line x1="${x}" y1="${C.topPad}" x2="${x}" y2="${C.topPad+C.chartH}" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>`;
+        const lbl=_dailyDates[i]?_dailyDates[i].slice(5):'';
+        if(n<=14||i===0||i===n-1||(i+1)%3===0)
+            svg+=`<text x="${x}" y="${C.height-C.botPad+13}" text-anchor="middle" font-size="8.5"
+                fill="rgba(255,255,255,0.4)" font-family="Vazirmatn,sans-serif" transform="rotate(-30,${x},${C.height-C.botPad+13})">${lbl}</text>`;
+    }
+    svg+=`<line x1="${C.leftPad}" y1="${C.topPad+C.chartH}" x2="${C.width-C.rightPad}" y2="${C.topPad+C.chartH}" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>`;
+
+    // فقط solo کاربر انتخابی + کاربر مقایسه
+    const soloUser = _soloState['daily'] || null;
+    const usersToRender = _chartUsers.filter(u=>{
+        if (!soloUser) return u.visible;
+        return u.username===soloUser || u.username===_dailyCompareUser;
+    });
+
+    usersToRender.forEach(u=>{
+        const data=_seriesDailyPts[u.username]; if(!data||!data.length) return;
+        const color=colorFor(u.username);
+        const isCompare = u.username===_dailyCompareUser && u.username!==soloUser;
+        const strokeStyle = isCompare ? '6 3' : 'none';
+        let path=`M ${C.xFor(0)} ${yFor(data[0])}`;
+        data.forEach((v,i)=>{ if(i>0) path+=` L ${C.xFor(i)} ${yFor(v)}`; });
+        svg+=`<path data-user-line="${u.username}" d="${path}" stroke="${color}" stroke-width="${isCompare?2.5:2}"
+            fill="none" stroke-linecap="round" stroke-linejoin="round"
+            stroke-dasharray="${strokeStyle}" style="opacity:1;transition:opacity 0.2s"/>`;
+        data.forEach((v,i)=>{
+            const x=C.xFor(i),y=yFor(v);
+            const tip=`<strong>${u.username}</strong>${isCompare?' (مقایسه)':''}<br>تاریخ: ${_dailyDates[i]||''}<br>امتیاز این روز: <strong>${v}</strong>`;
+            svg+=`<circle data-user-dot="${u.username}" cx="${x}" cy="${y}" r="${isCompare?4:3.5}"
+                fill="${color}" stroke="var(--bg-deep)" stroke-width="1.5"
+                data-tip="${tip.replace(/"/g,"'")}" style="cursor:pointer;opacity:1;transition:opacity 0.2s"/>`;
+            if(v>0) svg+=`<text x="${x}" y="${y-7}" text-anchor="middle" font-size="9"
+                fill="${color}" font-family="Vazirmatn,sans-serif" font-weight="700" style="opacity:0.85">${v}</text>`;
+        });
+    });
+
+    svg+=`</svg>`;
+    return yAxis + svg;
+}
+
+function buildDailyCompareUI() {
+    const soloUser = _soloState['daily'];
+    if (!soloUser) {
+        return `<p style="font-size:11px;color:var(--text-muted);text-align:center;padding:4px 0;">برای مقایسه، ابتدا روی نام یک کاربر در لگند کلیک کنید</p>`;
+    }
+    let html = `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+        <span style="font-size:11px;color:var(--text-muted);">مقایسه با:</span>`;
+    _chartUsers.filter(u=>u.username!==soloUser).forEach(u=>{
+        const isActive = _dailyCompareUser===u.username;
+        html+=`<button onclick="setDailyCompare('${u.username}')"
+            style="padding:4px 12px;border-radius:20px;border:1px solid ${isActive?colorFor(u.username):'var(--border-subtle)'};
+            background:${isActive?'rgba(99,133,255,0.12)':'transparent'};
+            color:${isActive?colorFor(u.username):'var(--text-muted)'};
+            font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all 0.15s;">
+            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colorFor(u.username)};margin-left:4px;"></span>
+            ${u.username}</button>`;
+    });
+    if (_dailyCompareUser) {
+        html+=`<button onclick="setDailyCompare(null)"
+            style="padding:4px 10px;border-radius:20px;border:1px solid var(--border-subtle);background:transparent;
+            color:var(--red);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);">✕ حذف</button>`;
+    }
+    html+=`</div>`;
+    return html;
+}
+
+window.setDailyCompare = function(username) {
+    _dailyCompareUser = (username===_dailyCompareUser) ? null : username;
+    const ui = document.getElementById('daily-compare-ui');
+    if (ui) ui.innerHTML = buildDailyCompareUI();
+    rerenderChart('daily');
+};
+
+// ══════════════════════════════════════════
+// رندر همه نمودارها
+// ══════════════════════════════════════════
+function renderAllCharts(container) {
+    const tip = document.getElementById('chartTooltip');
+
+    const zoomControls = id => `
+        <div class="chart-zoom-controls">
+            <button class="chart-zoom-btn" onclick="adjustZoom('${id}',1)" title="بزرگ‌نمایی">+</button>
+            <button class="chart-zoom-btn" onclick="adjustZoom('${id}',-1)" title="کوچک‌نمایی">−</button>
+        </div>`;
+
+    const html = `
+        <!-- نمودار ۱ -->
+        <div class="chart-block">
+            <div class="chart-title">
+                <span class="chart-title-label">📊 امتیاز هر بازی</span>
+                ${zoomControls('match')}
+            </div>
+            <div class="chart-legend" id="legend-match">${buildLegendHTML('match')}</div>
+            <div class="chart-scroll-wrapper" data-chart="match">${renderMatchChart()}</div>
+            <p class="chart-desc">امتیاز هر کاربر در هر بازی — ۱۰ نتیجه دقیق، ۷ اختلاف دقیق، ۵ برنده درست، ۲ اشتباه، ۰ پیش‌بینی نشده</p>
+        </div>
+
+        <!-- نمودار ۲ -->
+        <div class="chart-block">
+            <div class="chart-title">
+                <span class="chart-title-label">🥇 تاریخچه رتبه‌بندی</span>
+                ${zoomControls('rank')}
+            </div>
+            <div class="chart-legend" id="legend-rank">${buildLegendHTML('rank')}</div>
+            <div class="chart-scroll-wrapper" data-chart="rank">${renderRankChart()}</div>
+            <p class="chart-desc">موقعیت هر کاربر در جدول رتبه‌بندی پس از هر بازی‌ای که نتیجه‌اش توسط مدیر ثبت شده — رتبه ۱ بالاترین موقعیت است</p>
+        </div>
+
+        <!-- نمودار ۳ -->
+        <div class="chart-block">
+            <div class="chart-title">
+                <span class="chart-title-label">📈 رشد امتیاز تجمعی</span>
+                ${zoomControls('growth')}
+            </div>
+            <div class="chart-legend" id="legend-growth">${buildLegendHTML('growth')}</div>
+            <div class="chart-scroll-wrapper" data-chart="growth">${renderGrowthChart()}</div>
+            <p class="chart-desc">مجموع امتیاز هر کاربر پس از هر بازی‌ای که نتیجه‌اش توسط مدیر ثبت شده — خط صعودی نشان‌دهنده پیشرفت مداوم است</p>
+        </div>
+
+        <!-- نمودار ۴: امتیاز روزانه -->
+        <div class="chart-block">
+            <div class="chart-title">
+                <span class="chart-title-label">📅 امتیاز روزانه</span>
+                ${zoomControls('daily')}
+            </div>
+            <div class="chart-legend" id="legend-daily">${buildLegendHTML('daily')}</div>
+            <div id="daily-compare-ui" style="margin-bottom:8px;">${buildDailyCompareUI()}</div>
+            <div class="chart-scroll-wrapper" data-chart="daily">${renderDailyChart()}</div>
+            <p class="chart-desc">امتیاز هر کاربر در هر روز — روی نام کاربر کلیک کنید تا تنها او نمایش داده شود، سپس یک نفر دیگر را برای مقایسه انتخاب کنید</p>
+        </div>
+    `;
+    container.innerHTML = html;
+
+    // tooltip برای همه نمودارها
+    ['match','rank','growth','daily'].forEach(g=>{
+        const svgEl=document.getElementById(`svg-${g}`);
+        if(svgEl) makeDotEvents(svgEl, tip);
+    });
+}
+
+// ══════════════════════════════════════════
+// تب کپی‌کار: تشخیص پیش‌بینی‌های مشابه بین کاربران
+// ══════════════════════════════════════════
+let _copycatPairs = [];
+let _copycatSort = 'count'; // 'count' | 'rate'
+
+async function initCopycat() {
+    const container = document.getElementById('copycatContainer');
+    try {
+        const { users, matches, predictions, teams } = await loadData();
+
+        const teamsMap = {};
+        teams.forEach(t => { teamsMap[t.id] = t.name; });
+
+        const validPred = p => p && p.home_prediction !== null && p.away_prediction !== null &&
+            p.home_prediction !== '' && p.away_prediction !== '';
+
+        // ایندکس پیش‌بینی هر کاربر برای هر بازی
+        const predIdx = {};
+        predictions.forEach(p => {
+            if (!validPred(p)) return;
+            if (!predIdx[p.username]) predIdx[p.username] = {};
+            predIdx[p.username][p.match_id] = p;
+        });
+
+        // بررسی همه‌ی زوج‌های ممکن از کاربران
+        const pairs = [];
+        for (let i = 0; i < users.length; i++) {
+            for (let j = i + 1; j < users.length; j++) {
+                const u1 = users[i].username, u2 = users[j].username;
+                const p1 = predIdx[u1] || {}, p2 = predIdx[u2] || {};
+                const matchedList = [];
+                let settledCount = 0, successCount = 0;
+
+                matches.forEach(m => {
+                    const a = p1[m.id], b = p2[m.id];
+                    if (!a || !b) return;
+                    if (String(a.home_prediction) === String(b.home_prediction) &&
+                        String(a.away_prediction) === String(b.away_prediction)) {
+
+                        const settled = m.home_score !== null && m.away_score !== null;
+                        let pts = null;
+                        if (settled) {
+                            pts = calcPoints(parseInt(a.home_prediction), parseInt(a.away_prediction),
+                                              parseInt(m.home_score), parseInt(m.away_score));
+                            settledCount++;
+                            if (pts === 10) successCount++;
+                        }
+
+                        matchedList.push({
+                            home: teamsMap[m.team_home_id] || '—',
+                            away: teamsMap[m.team_away_id] || '—',
+                            score: `${a.home_prediction} - ${a.away_prediction}`,
+                            settled, pts
+                        });
+                    }
+                });
+
+                const rate = settledCount > 0 ? (successCount / settledCount) * 100 : null;
+                pairs.push({ u1, u2, count: matchedList.length, matches: matchedList, settledCount, successCount, rate });
+            }
+        }
+
+        _copycatPairs = pairs.filter(p => p.count > 0);
+        renderCopycatList(container);
+    } catch (err) {
+        container.innerHTML = `<p style="color:var(--red);padding:20px;text-align:center;">خطا: ${err.message}</p>`;
+    }
+}
+
+function renderCopycatList(container) {
+    const meaningful = [..._copycatPairs];
+
+    if (_copycatSort === 'rate') {
+        // اول کسانی که درصد موفقیت دارند، بر اساس بیشترین درصد — بدون نتیجه به انتها
+        meaningful.sort((a, b) => {
+            if (a.rate === null && b.rate === null) return b.count - a.count;
+            if (a.rate === null) return 1;
+            if (b.rate === null) return -1;
+            if (b.rate !== a.rate) return b.rate - a.rate;
+            return b.count - a.count;
+        });
+    } else {
+        meaningful.sort((a, b) => b.count - a.count);
+    }
+
+    const sortToggle = `
+        <div class="copycat-sort-toggle">
+            <button class="copycat-sort-btn ${_copycatSort==='count'?'active':''}" data-sort="count" onclick="setCopycatSort('count')">بیشترین تعداد</button>
+            <button class="copycat-sort-btn ${_copycatSort==='rate'?'active':''}" data-sort="rate" onclick="setCopycatSort('rate')">بیشترین درصد موفقیت</button>
+        </div>`;
+
+    let html = sortToggle;
+
+    if (meaningful.length === 0) {
+        html += '<div class="empty-table">هیچ پیش‌بینی کاملاً مشابهی بین کاربران یافت نشد.</div>';
+    } else {
+        html += `<p class="chart-desc" style="margin:14px 0;">رتبه‌بندی زوج‌کاربرهایی که بیشترین پیش‌بینی کاملاً یکسان (همان نتیجه دقیق برای همان بازی) را ثبت کرده‌اند — بر اساس بررسی پیش‌بینی‌های تمام کاربران. درصد موفقیت یعنی از بین بازی‌های تعیین‌شده، در چه درصدی نتیجه دقیق پیش‌بینی‌شان درست بوده است.</p>`;
+        meaningful.forEach((p, idx) => {
+            const rc = idx === 0 ? 'r1' : idx === 1 ? 'r2' : idx === 2 ? 'r3' : '';
+            const rateLabel = p.rate === null
+                ? '<span class="copycat-rate-badge na">بدون نتیجه</span>'
+                : `<span class="copycat-rate-badge">${Math.round(p.rate)}% موفقیت (${p.successCount}/${p.settledCount})</span>`;
+
+            html += `
+            <div class="copycat-pair">
+                <div class="copycat-pair-header">
+                    <div class="rank-badge ${rc}">${idx + 1}</div>
+                    <div class="copycat-names">${p.u1} 🔁 ${p.u2}</div>
+                    <div class="copycat-badges">
+                        <span class="copycat-count-badge">${p.count} پیش‌بینی مشابه</span>
+                        ${rateLabel}
+                    </div>
+                </div>
+                <div class="copycat-matches">
+                    ${p.matches.map(m => {
+                        const ptsHtml = m.settled
+                            ? `<span class="copycat-pts-badge pts${m.pts}">${m.pts===10?'+10 ✅':'+'+m.pts}</span>`
+                            : `<span class="copycat-pts-badge pending">در انتظار</span>`;
+                        return `<div class="copycat-match-row">
+                            <span>${m.home} - ${m.away}</span>
+                            <span class="copycat-match-right">
+                                <span class="copycat-score">${m.score}</span>
+                                ${ptsHtml}
+                            </span>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>`;
+        });
+    }
+    container.innerHTML = html;
+}
+
+window.setCopycatSort = function(sort) {
+    if (_copycatSort === sort) return;
+    _copycatSort = sort;
+    renderCopycatList(document.getElementById('copycatContainer'));
+};
+
+// ══════════════════════════════════════════
+// شروع
+// ══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+    if (!localStorage.getItem('userRole')) { window.location.href='index.html'; return; }
+    initTables();
+    initChart();
+});
+</script>
+</body>
+</html>

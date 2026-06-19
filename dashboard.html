@@ -13,10 +13,42 @@
 
         <header class="app-header">
             <div class="header-inner">
-                <h1 id="welcomeMessage">در حال بارگذاری…</h1>
+                <!-- ردیف اول: دکمه زنگ سمت چپ + خوش‌آمدید سمت راست -->
+                <div style="display:flex;align-items:center;gap:8px;width:100%;">
+                    <!-- دکمه اعلان — چسبیده به سمت چپ -->
+                    <button id="notifBellBtn" style="
+                        position:relative;flex-shrink:0;order:0;
+                        width:40px;height:40px;border-radius:12px;
+                        background:linear-gradient(135deg,rgba(99,133,255,0.18),rgba(99,133,255,0.08));
+                        border:1.5px solid rgba(99,133,255,0.3);
+                        color:#fff;font-size:18px;cursor:pointer;
+                        display:flex;align-items:center;justify-content:center;
+                        transition:all 0.2s;
+                        box-shadow:0 2px 10px rgba(99,133,255,0.15);
+                    " title="اعلان‌ها"
+                    onmouseover="this.style.background='linear-gradient(135deg,rgba(99,133,255,0.3),rgba(99,133,255,0.15))';this.style.transform='scale(1.07)'"
+                    onmouseout="this.style.background='linear-gradient(135deg,rgba(99,133,255,0.18),rgba(99,133,255,0.08))';this.style.transform='scale(1)'">
+                        🔔
+                        <span id="notifBadge" style="
+                            display:none;position:absolute;top:-5px;right:-5px;
+                            min-width:18px;height:18px;
+                            background:linear-gradient(135deg,#ff3b30,#ff6b35);
+                            color:#fff;font-size:9px;font-weight:900;
+                            border-radius:10px;padding:0 4px;
+                            line-height:18px;text-align:center;
+                            white-space:nowrap;border:2px solid var(--bg-base,#0f1224);
+                            box-shadow:0 2px 6px rgba(255,59,48,0.5);
+                            letter-spacing:0;
+                        "></span>
+                    </button>
+                    <!-- خوش‌آمدید — باقیمانده فضا، راست‌چین -->
+                    <h1 id="welcomeMessage" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;margin:0;order:1;">در حال بارگذاری…</h1>
+                </div>
+                <!-- ردیف دوم: دکمه‌های ناوبری -->
                 <div class="header-actions">
-                    <button id="globalResultsBtn" class="btn-results-nav">📊 جدول نتایج</button>
+                    <button id="globalResultsBtn" class="btn-results-nav">📊 نتایج</button>
                     <button id="usersLastVisitBtn" class="btn-results-nav">👥 کاربران</button>
+                    <button id="scoresBtn" class="btn-results-nav">🏅 امتیازات</button>
                     <button id="logoutBtn" class="btn-logout-text">خروج</button>
                 </div>
             </div>
@@ -26,6 +58,15 @@
 
             <!-- پنل ادمین -->
             <div class="admin-only">
+
+                <section class="card">
+                    <p class="section-title">📢 مدیریت اعلان‌ها</p>
+                    <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.7;">
+                        با زدن این دکمه، به همه کاربران اعلان ارسال می‌شود که چند بازی پیش‌بینی نکرده‌اند. اعلان بعد از بازبارگذاری صفحه توسط هر کاربر نمایش داده می‌شود.
+                    </p>
+                    <button id="sendUnpredNotifBtn" class="btn-primary">📣 ارسال اعلان پیش‌بینی‌های ثبت نشده</button>
+                    <div id="notifSendResult" style="margin-top:10px;font-size:12px;"></div>
+                </section>
 
                 <section class="card">
                     <p class="section-title">مدیریت کاربران</p>
@@ -67,6 +108,16 @@
                     </div>
                 </section>
 
+                <section class="card">
+                    <p class="section-title">بررسی پیش‌بینی‌های تکراری</p>
+                    <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.7;">
+                        گاهی به‌دلیل ثبت دستی پیش‌بینی توسط ادمین، ممکن است برای یک کاربر و یک بازی دو رکورد پیش‌بینی ایجاد شود
+                        که باعث محاسبه دوبرابر امتیاز در جدول نتایج می‌شود. با این ابزار می‌توانید این موارد را پیدا و اصلاح کنید.
+                    </p>
+                    <button id="checkDuplicatePredsBtn" class="btn-primary">🔍 بررسی موارد تکراری</button>
+                    <div id="duplicatePredsResult" style="margin-top:12px;"></div>
+                </section>
+
             </div>
 
             <!-- بازدید کاربران -->
@@ -75,9 +126,13 @@
                 <div class="list-wrapper" id="lastVisitListWrapper">در حال بارگذاری…</div>
             </section>
 
+
             <!-- بازی‌ها -->
             <section class="card">
-                <p class="section-title">بازی‌های جام جهانی ۲۰۲۶</p>
+                <div class="matches-section-head">
+                    <p class="section-title" style="margin-bottom:0;">بازی‌های جام جهانی ۲۰۲۶</p>
+                    <button id="goToLastMatchBtn" class="btn-go-last-match">رفتن به آخرین بازی</button>
+                </div>
                 <div id="displayFoldersContainer"></div>
             </section>
 

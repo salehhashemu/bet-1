@@ -140,13 +140,6 @@ function renderRewardBox(userStatus) {
             }
             .card-input:focus { border-color: #38bdf8 !important; }
             .card-input:disabled { background: rgba(15,23,42,0.3) !important; color: #64748b !important; cursor: not-allowed; }
-            .btn-copy-card {
-                position: absolute; right: 8px;
-                background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.2);
-                color: #38bdf8; border-radius: 6px; padding: 4px 8px; font-size: 11px;
-                cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.2s;
-            }
-            .btn-copy-card:hover { background: rgba(56,189,248,0.2); }
             .btn-save-reward {
                 background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%) !important;
                 color: white !important; border: none !important;
@@ -193,29 +186,58 @@ function renderRewardBox(userStatus) {
     if (expired) buttonText = 'ثبت‌نام غیرفعال است (پایان مهلت)';
     if (isChecked) buttonText = '🔒 شما شرکت کرده‌اید و امکان تغییر وجود ندارد';
 
+    // اگر مهلت تمام شده، جزئیات را پشت دکمه مخفی می‌کنیم
+    const detailsId = 'rewardBoxDetails';
+    const toggleBtnId = 'rewardBoxToggleBtn';
+
     rewardBox.innerHTML = `
-        <div class="reward-title"><span>🎁 طرح بزرگ جایزه و چالش مالی مسابقات</span></div>
-        ${noticeHtml}
-        <p class="reward-law-text">
-            <b>قانون مسابقه:</b> در صورت فعال‌سازی این تیک، شما مشمول دریافت جایزه بزرگ مسابقات (در صورت اول شدن) خواهید بود.
-            توجه داشته باشید که <b>مهلت شرکت در این چالش تا تاریخ 2026/06/11 ساعت 22:30 می‌باشد.</b>
-            همچنین در صورت باخت، <b>متعهد می‌شوید که مبلغ ۳۰۰ هزار تومان به نفر اول جدول پرداخت کنید.</b>
-            جهت تایید، تیک زیر را زده و شماره کارت خود را وارد نمایید.
-        </p>
-        <label class="switch-container ${isDisabled ? 'disabled' : ''}">
-            <input type="checkbox" id="chkEligible" class="reward-checkbox" ${isChecked ? 'checked' : ''} ${isDisabled ? 'disabled' : ''}>
-            <span>این شرط و قانون مالی را می‌پذیرم و وارد چالش می‌شوم.</span>
-        </label>
-        <div id="cardWrapper" class="card-input-wrapper ${isChecked ? 'show' : ''}">
-            <label style="display:block; margin-bottom:5px; font-size:12px; color:#cbd5e1;">شماره کارت ۱۶ رقمی بانکی شما:</label>
-            <div class="card-input-container">
-                <input type="text" id="txtCardNumber" class="card-input" placeholder="---- ---- ---- ----" maxlength="16" value="${cardValue}" ${isDisabled ? 'disabled' : ''}>
-                <button class="btn-copy-card" type="button" onclick="copyCardNumber()">📋 کپی</button>
-            </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:${expired || isChecked ? '10px' : '0'};">
+            <div class="reward-title" style="margin-bottom:0;"><span>🎁 طرح بزرگ جایزه و چالش مالی مسابقات</span></div>
+            ${expired || isChecked ? `
+            <button id="${toggleBtnId}" onclick="(function(){
+                var d=document.getElementById('${detailsId}');
+                var b=document.getElementById('${toggleBtnId}');
+                var open=d.style.display==='block';
+                d.style.display=open?'none':'block';
+                b.innerHTML=open?'<span style=\\'margin-left:5px;\\'>جزئیات</span><span style=\\'font-size:10px;\\'>▾</span>':'<span style=\\'margin-left:5px;\\'>بستن</span><span style=\\'font-size:10px;\\'>▴</span>';
+            })()" style="
+                display:inline-flex;align-items:center;gap:4px;
+                font-size:11px;font-weight:700;
+                padding:6px 14px;
+                border-radius:20px;
+                border:1px solid rgba(99,133,255,0.25);
+                background:rgba(99,133,255,0.08);
+                color:#6385ff;
+                cursor:pointer;
+                font-family:var(--font,inherit);
+                flex-shrink:0;
+                transition:all 0.18s;
+            " onmouseover="this.style.background='rgba(99,133,255,0.16)'" onmouseout="this.style.background='rgba(99,133,255,0.08)'">
+                <span style="margin-left:5px;">جزئیات</span><span style="font-size:10px;">▾</span>
+            </button>` : ''}
         </div>
-        <button id="btnSaveReward" class="btn-save-reward" onclick="saveRewardStatus()" ${isDisabled ? 'disabled' : ''}>
-            ${buttonText}
-        </button>
+        ${noticeHtml}
+        <div id="${detailsId}" style="display:${expired || isChecked ? 'none' : 'block'};">
+            <p class="reward-law-text">
+                <b>قانون مسابقه:</b> در صورت فعال‌سازی این تیک، شما مشمول دریافت جایزه بزرگ مسابقات (در صورت اول شدن) خواهید بود.
+                توجه داشته باشید که <b>مهلت شرکت در این چالش تا تاریخ 2026/06/11 ساعت 22:30 می‌باشد.</b>
+                همچنین در صورت باخت، <b>متعهد می‌شوید که مبلغ ۳۰۰ هزار تومان به نفر اول جدول پرداخت کنید.</b>
+                جهت تایید، تیک زیر را زده و شماره کارت خود را وارد نمایید.
+            </p>
+            <label class="switch-container ${isDisabled ? 'disabled' : ''}">
+                <input type="checkbox" id="chkEligible" class="reward-checkbox" ${isChecked ? 'checked' : ''} ${isDisabled ? 'disabled' : ''}>
+                <span>این شرط و قانون مالی را می‌پذیرم و وارد چالش می‌شوم.</span>
+            </label>
+            <div id="cardWrapper" class="card-input-wrapper ${isChecked ? 'show' : ''}">
+                <label style="display:block; margin-bottom:5px; font-size:12px; color:#cbd5e1;">شماره کارت ۱۶ رقمی بانکی شما:</label>
+                <div class="card-input-container">
+                    <input type="text" id="txtCardNumber" class="card-input" placeholder="---- ---- ---- ----" maxlength="16" value="${cardValue}" ${isDisabled ? 'disabled' : ''}>
+                </div>
+            </div>
+            <button id="btnSaveReward" class="btn-save-reward" onclick="saveRewardStatus()" ${isDisabled ? 'disabled' : ''}>
+                ${buttonText}
+            </button>
+        </div>
     `;
 
     appContent.insertBefore(rewardBox, appContent.firstChild);
@@ -233,25 +255,6 @@ function renderRewardBox(userStatus) {
     }
 }
 
-function copyCardNumber() {
-    const cardInput = document.getElementById('txtCardNumber');
-    if (!cardInput || !cardInput.value.trim()) {
-        showFloatingToast("شماره کارتی برای کپی کردن وجود ندارد!", "warning");
-        return;
-    }
-    cardInput.select();
-    cardInput.setSelectionRange(0, 99999);
-    navigator.clipboard.writeText(cardInput.value)
-        .then(() => { showFloatingToast("شماره کارت با موفقیت در کلیپ‌بورد کپی شد. 💳", "success"); })
-        .catch(() => {
-            try {
-                document.execCommand('copy');
-                showFloatingToast("شماره کارت با موفقیت کپی شد. 💳", "success");
-            } catch (err) {
-                showFloatingToast("خطایی در کپی شماره کارت رخ داد.", "error");
-            }
-        });
-}
 
 async function saveRewardStatus() {
     if (isChallengeExpired()) {

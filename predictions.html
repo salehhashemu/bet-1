@@ -6,6 +6,7 @@
     <title>نتایج و رتبه‌بندی — جام جهانی ۲۰۲۶</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
         /* استایل‌های اختصاصی صفحه نتایج */
         .results-tabs {
@@ -63,6 +64,35 @@
         .lb-name.is-me { color: var(--gold); }
         .lb-sub  { font-size: 11px; color: var(--text-muted); }
         .lb-score { font-size: 16px; font-weight: 700; color: var(--accent); }
+        .lb-last-points {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--green);
+            background: rgba(52,211,153,0.12);
+            border: 1px solid rgba(52,211,153,0.3);
+            padding: 2px 7px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+        .lb-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .lb-settled-ratio {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 2px 7px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+        .lb-rank-change {
+            font-size: 12px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+        .lb-rank-change.up { color: var(--green); }
+        .lb-rank-change.down { color: var(--red); }
+        .lb-rank-change.same { color: var(--text-muted); }
 
         /* آکاردئون کاربران */
         .user-accord {
@@ -170,6 +200,7 @@
             align-items: center;
             gap: 3px;
             min-width: 100px;
+            flex-wrap: wrap;
         }
         .pred-score {
             display: flex;
@@ -190,16 +221,18 @@
             border-radius: 4px;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
     <div class="mobile-container" style="max-width: 560px;">
 
-        <header class="app-header">
-            <div class="header-right-side">
-                <h1 style="color: var(--gold);">جدول نتایج</h1>
+        <header class="app-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;direction:ltr;">
+            <div style="display:flex;gap:6px;align-items:center;">
+                <button onclick="window.location.href='dashboard.html'" class="btn-results-nav" dir="rtl">← بازگشت</button>
+                <button id="backupBtn" class="btn-results-nav" style="background:linear-gradient(135deg,rgba(52,211,153,0.15),rgba(52,211,153,0.08)) !important;border-color:rgba(52,211,153,0.25) !important;color:#34d399 !important;"><span dir="rtl">📥 بکاپ</span></button>
             </div>
-            <button onclick="window.location.href='dashboard.html'" class="btn-results-nav">← بازگشت</button>
+            <h1 style="color:var(--gold);">جدول نتایج</h1>
         </header>
 
         <main class="app-content">
@@ -207,14 +240,35 @@
             <!-- تب‌ها -->
             <div class="results-tabs">
                 <button class="tab-btn active" onclick="switchTab('leaderboard', this)">رتبه‌بندی</button>
+                <button class="tab-btn" onclick="switchTab('challenge', this)">🏆 چالش</button>
                 <button class="tab-btn" onclick="switchTab('predictions', this)">پیش‌بینی‌ها</button>
             </div>
 
             <!-- تب رتبه‌بندی -->
             <div class="tab-panel active" id="panel-leaderboard">
+                <!-- انتخاب‌گر رتبه‌بندی بر اساس بازی -->
+                <div id="matchRankingSelector" style="margin-bottom:14px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:14px;padding:12px 14px;">
+                    <div style="font-size:12px;font-weight:800;color:var(--text-primary);margin-bottom:10px;">🎯 رتبه‌بندی بر اساس بازی</div>
+                    <div id="matchRankingBtns" style="display:flex;flex-wrap:wrap;gap:6px;">
+                        <button id="btnRankAll" class="match-rank-btn active" onclick="showMatchRanking('all')"
+                            style="padding:6px 14px;border-radius:20px;border:1px solid rgba(99,133,255,0.4);background:rgba(99,133,255,0.15);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all 0.15s;">
+                            🏆 رتبه‌بندی کل
+                        </button>
+                        <div id="perMatchBtns" style="display:contents;"></div>
+                    </div>
+                </div>
                 <div id="leaderboardContainer">
                     <div style="text-align:center; padding:40px 0; color:var(--text-muted); font-size:13px;">
                         در حال محاسبه امتیازات…
+                    </div>
+                </div>
+            </div>
+
+            <!-- تب چالش -->
+            <div class="tab-panel" id="panel-challenge">
+                <div id="challengeLeaderboardContainer">
+                    <div style="text-align:center; padding:40px 0; color:var(--text-muted); font-size:13px;">
+                        در حال بارگذاری چالش…
                     </div>
                 </div>
             </div>
@@ -236,216 +290,681 @@
         const SUPABASE_KEY = "sb_publishable_La0ndqo_3bHPHl-HKXtkBw_aZ74Kip2";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // expose برای rewardRegistration.js
+        window.supabaseClient = supabaseClient;
+
         const currentLoggedInUser = localStorage.getItem('loggedInUser') || '';
         let openedUsers = [];
         let openedUserFolders = [];
 
-        document.addEventListener('DOMContentLoaded', () => {
+        // ── استایل دکمه‌های رتبه‌بندی بازی ──
+        (function() {
+            var s = document.createElement('style');
+            s.textContent = `.match-rank-btn{transition:all 0.15s;} .match-rank-btn.active{background:rgba(99,133,255,0.2)!important;color:var(--accent)!important;border-color:rgba(99,133,255,0.5)!important;box-shadow:0 0 0 1px rgba(99,133,255,0.2);}`;
+            document.head.appendChild(s);
+        })();
+
+        window._rankingData = null;
+
+        window.showMatchRanking = function(matchId) {
+            document.querySelectorAll('.match-rank-btn').forEach(function(b) { b.classList.remove('active'); });
+            var btn = document.getElementById(matchId === 'all' ? 'btnRankAll' : 'btnRankM' + matchId);
+            if (btn) btn.classList.add('active');
+
+            var lbEl = document.getElementById('leaderboardContainer');
+            var d = window._rankingData;
+            if (!d) return;
+
+            if (matchId === 'all') {
+                renderLeaderboard(lbEl, d.leaderboardArray, d.totalMatchesCount, d.settledMatchesCount,
+                    d.premiumSet, d.prevRanks, d.lastMatchPoints, d.lastSettledMatch, d.currentLoggedInUser);
+                return;
+            }
+
+            var match = d.matches.find(function(m) { return String(m.id) === String(matchId); });
+            if (!match || match.home_score === null || match.away_score === null) {
+                lbEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">نتیجه این بازی هنوز ثبت نشده است.</p>';
+                return;
+            }
+
+            var reH = parseInt(match.home_score), reA = parseInt(match.away_score);
+            var rW = reH > reA ? 1 : reA > reH ? 2 : 0;
+            var homeName = d.teamsMap[match.team_home_id] || '—';
+            var awayName = d.teamsMap[match.team_away_id] || '—';
+
+            var rows = d.users.map(function(u) {
+                var pred = d.scoreIdx[u.username + '_' + String(matchId)];
+                if (!pred) return { username: u.username, pts: null, predStr: null };
+                var prH = parseInt(pred.home_prediction), prA = parseInt(pred.away_prediction);
+                if (isNaN(prH) || isNaN(prA)) return { username: u.username, pts: null, predStr: null };
+                var pW = prH > prA ? 1 : prA > prH ? 2 : 0;
+                var pts;
+                if (prH === reH && prA === reA) pts = 10;
+                else if (rW === pW && (reH - reA) === (prH - prA)) pts = 7;
+                else if (rW === pW) pts = 5;
+                else pts = 2;
+                return { username: u.username, pts: pts, predStr: prH + ' – ' + prA };
+            }).sort(function(a, b) {
+                if (b.pts === null && a.pts === null) return 0;
+                if (b.pts === null) return -1;
+                if (a.pts === null) return 1;
+                return b.pts - a.pts;
+            });
+
+            var ptsCssMap = {10:'color:var(--green)', 7:'color:var(--accent)', 5:'color:var(--gold)', 2:'color:var(--text-secondary)'};
+
+            lbEl.innerHTML =
+                '<div style="background:var(--gold-dim);border:1px dashed rgba(240,192,64,0.25);border-radius:10px;padding:10px 14px;margin-bottom:12px;text-align:center;font-size:12px;color:var(--gold);">' +
+                    'نتیجه واقعی: <strong>' + homeName + ' ' + reH + ' – ' + reA + ' ' + awayName + '</strong>' +
+                '</div>' +
+                rows.map(function(r, i) {
+                    var rank = i + 1;
+                    var rc = rank <= 3 ? 'rank-' + rank : '';
+                    var isMe = r.username === d.currentLoggedInUser;
+                    var ptsCss = r.pts !== null ? (ptsCssMap[r.pts] || 'color:var(--text-muted)') : 'color:var(--text-muted)';
+                    return '<div class="lb-row' + (isMe ? ' is-me' : '') + '" style="animation-delay:' + (i*0.04) + 's">' +
+                        '<div class="lb-left">' +
+                            '<div class="rank-badge ' + rc + '">' + rank + '</div>' +
+                            '<div class="lb-meta">' +
+                                '<span class="lb-name' + (isMe ? ' is-me' : '') + '">' + r.username + '</span>' +
+                                '<span class="lb-sub">' + (r.predStr ? 'پیش‌بینی: ' + r.predStr : '❌ پیش‌بینی نکرده') + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="lb-right">' +
+                            '<div class="lb-score" style="' + ptsCss + '">' + (r.pts !== null ? r.pts + ' امتیاز' : '—') + '</div>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+        };
+
+        function renderLeaderboard(lbEl, leaderboardArray, totalMatchesCount, settledMatchesCount, premiumSet, prevRanks, lastMatchPoints, lastSettledMatch, curUser) {
+            if (!lbEl) return;
+            lbEl.innerHTML = '';
+            leaderboardArray.forEach(function(item, i) {
+                var rank = i + 1;
+                var rc = rank <= 3 ? 'rank-' + rank : '';
+                var isMe = item.username === curUser;
+                var badge = premiumSet.has(item.username) ? '<span class="premium-badge">💎 چالش</span>' : '';
+                var prevRank = prevRanks[item.username];
+                var diff = prevRank !== undefined ? prevRank - rank : 0;
+                var arrow = '', cls = '';
+                if (prevRank !== undefined) {
+                    if (diff > 0) { cls = 'up'; arrow = diff >= 3 ? '▲▲' : '▲'; }
+                    else if (diff < 0) { cls = 'down'; arrow = diff <= -3 ? '▼▼' : '▼'; }
+                    else { cls = 'same'; arrow = '➖'; }
+                }
+                var rankChangeBadge = prevRank !== undefined ? '<span class="lb-rank-change ' + cls + '">' + arrow + '</span>' : '';
+                var pts = lastSettledMatch ? lastMatchPoints[item.username] : undefined;
+                var lastPointsBadge = pts !== undefined ? '<span class="lb-last-points">+' + pts + '</span>' : '';
+                var settledRatio = '<span class="lb-settled-ratio">' + item.settledPredCount + '/' + settledMatchesCount + '</span>';
+                var row = document.createElement('div');
+                row.className = 'lb-row' + (isMe ? ' is-me' : '');
+                row.style.animationDelay = (i * 0.04) + 's';
+                row.innerHTML =
+                    '<div class="lb-left">' +
+                        '<div class="rank-badge ' + rc + '">' + rank + '</div>' +
+                        '<div class="lb-meta">' +
+                            '<span class="lb-name' + (isMe ? ' is-me' : '') + '" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">' + item.username + ' ' + badge + '</span>' +
+                            '<span class="lb-sub">' + item.predCount + ' از ' + totalMatchesCount + ' پیش‌بینی</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="lb-right">' +
+                        rankChangeBadge +
+                        '<div style="display:flex;align-items:center;gap:6px;">' +
+                            '<div class="lb-score">' + item.score + '</div>' +
+                            settledRatio + lastPointsBadge +
+                        '</div>' +
+                    '</div>';
+                lbEl.appendChild(row);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
             if (!localStorage.getItem('userRole')) {
                 window.location.href = 'index.html';
                 return;
+            }
+            // بررسی آیا از داشبورد با فیلتر بازی خاص آمده‌ایم
+            var filterMatchId = localStorage.getItem('filterMatchId');
+            var filterMatchHome = localStorage.getItem('filterMatchHome');
+            var filterMatchAway = localStorage.getItem('filterMatchAway');
+            if (filterMatchId) {
+                localStorage.removeItem('filterMatchId');
+                localStorage.removeItem('filterMatchHome');
+                localStorage.removeItem('filterMatchAway');
+                window._filterMatchId = filterMatchId;
+                window._filterMatchHome = filterMatchHome || '';
+                window._filterMatchAway = filterMatchAway || '';
+                // سوئیچ به تب پیش‌بینی‌ها
+                document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+                document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+                var predTab = document.querySelector('.tab-btn[onclick*="predictions"]');
+                if (predTab) predTab.classList.add('active');
+                var predPanel = document.getElementById('panel-predictions');
+                if (predPanel) predPanel.classList.add('active');
             }
             initResultsPage();
         });
 
         function switchTab(tabId, btn) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+            document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
             btn.classList.add('active');
             document.getElementById('panel-' + tabId).classList.add('active');
         }
 
         async function initResultsPage() {
+            var currentLoggedInUser = localStorage.getItem('loggedInUser') || '';
+            var currentUserRole = localStorage.getItem('userRole') || 'user';
+            var loadingHtml = '<div style="text-align:center;padding:30px 0;color:var(--text-muted);font-size:13px;">در حال بارگذاری...</div>';
+            var lbEl = document.getElementById('leaderboardContainer');
+            var chEl = document.getElementById('challengeLeaderboardContainer');
+            var usEl = document.getElementById('usersPredictionsContainer');
+            if (lbEl) lbEl.innerHTML = loadingHtml;
+            if (chEl) chEl.innerHTML = loadingHtml;
+            if (usEl) usEl.innerHTML = loadingHtml;
+
             try {
-                const { data: users }          = await supabaseClient.from('project_users').select('username');
-                const { data: matches }        = await supabaseClient.from('matches').select('*');
-                const { data: teams }          = await supabaseClient.from('teams').select('*');
-                const { data: folders }        = await supabaseClient.from('folders').select('*').order('id', { ascending: true });
-                const { data: allPredictions } = await supabaseClient.from('predictions').select('*');
-                // فچ کاربران پریمیوم (شرکت‌کننده در چالش مالی)
-                const { data: premiumUsers }   = await supabaseClient
-                    .from('project_users')
-                    .select('username')
-                    .eq('is_eligible_for_reward', true);
+                var results = await Promise.all([
+                    supabaseClient.from('project_users').select('username, is_eligible_for_reward'),
+                    supabaseClient.from('matches').select('*').order('id', { ascending: true }),
+                    supabaseClient.from('teams').select('*'),
+                    supabaseClient.from('folders').select('*').order('id', { ascending: true }),
+                    supabaseClient.from('predictions').select('*'),
+                    supabaseClient.rpc('get_server_time')
+                ]);
 
-                const premiumSet = new Set((premiumUsers || []).map(p => p.username));
-
-                const teamsMap = {};
-                teams?.forEach(t => { teamsMap[t.id] = t.name; });
-
-                const totalMatchesCount = matches ? matches.length : 0;
-
-                const userScores = {};
-                const userPredictionsCount = {};
-                users?.forEach(u => { userScores[u.username] = 0; userPredictionsCount[u.username] = 0; });
-
-                allPredictions?.forEach(pred => {
-                    if (userPredictionsCount[pred.username] !== undefined) {
-                        const exists = matches?.some(m => String(m.id) === String(pred.match_id));
-                        if (exists && pred.home_prediction !== null && pred.away_prediction !== null
-                            && pred.home_prediction !== "" && pred.away_prediction !== "") {
-                            userPredictionsCount[pred.username] += 1;
-                        }
-                    }
-                });
-
-                allPredictions?.forEach(pred => {
-                    const userExists = users?.some(u => u.username === pred.username);
-                    if (!userExists) return;
-
-                    const match = matches?.find(m => String(m.id) === String(pred.match_id));
-                    if (match && match.home_score !== null && match.away_score !== null) {
-                        const prH = parseInt(pred.home_prediction);
-                        const prA = parseInt(pred.away_prediction);
-                        const reH = parseInt(match.home_score);
-                        const reA = parseInt(match.away_score);
-
-                        if (!isNaN(prH) && !isNaN(prA) && !isNaN(reH) && !isNaN(reA)) {
-                            if (userScores[pred.username] === undefined) userScores[pred.username] = 0;
-
-                            let realWinner = reH > reA ? 1 : (reA > reH ? 2 : 0);
-                            let predWinner = prH > prA ? 1 : (prA > prH ? 2 : 0);
-
-                            if (prH === reH && prA === reA)                              userScores[pred.username] += 10;
-                            else if (realWinner === predWinner && (reH-reA) === (prH-prA)) userScores[pred.username] += 7;
-                            else if (realWinner === predWinner)                           userScores[pred.username] += 5;
-                            else                                                          userScores[pred.username] += 2;
-                        }
-                    }
-                });
-
-                // رندر جدول رتبه‌بندی
-                const leaderboardArray = Object.keys(userScores)
-                    .map(username => ({ username, score: userScores[username], predCount: userPredictionsCount[username] || 0 }))
-                    .sort((a, b) => b.score - a.score);
-
-                const leaderboardContainer = document.getElementById('leaderboardContainer');
-                leaderboardContainer.innerHTML = '';
-
-                leaderboardArray.forEach((item, index) => {
-                    const rank = index + 1;
-                    const rankClass = rank <= 3 ? `rank-${rank}` : '';
-                    const isMe = item.username === currentLoggedInUser;
-                    const isPremium = premiumSet.has(item.username);
-
-                    const premiumBadgeHtml = isPremium
-                        ? `<span class="premium-badge">💎 چالش</span>`
-                        : '';
-
-                    const row = document.createElement('div');
-                    row.className = `lb-row${isMe ? ' is-me' : ''}`;
-                    row.style.animationDelay = `${index * 0.04}s`;
-                    row.innerHTML = `
-                        <div class="lb-left">
-                            <div class="rank-badge ${rankClass}">${rank}</div>
-                            <div class="lb-meta">
-                                <span class="lb-name${isMe ? ' is-me' : ''}" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
-                                    ${item.username}${isMe ? ' — شما' : ''}
-                                    ${premiumBadgeHtml}
-                                </span>
-                                <span class="lb-sub">${item.predCount} از ${totalMatchesCount} پیش‌بینی</span>
-                            </div>
-                        </div>
-                        <div class="lb-score">${item.score}</div>
-                    `;
-                    leaderboardContainer.appendChild(row);
-                });
-
-                // رندر پیش‌بینی کاربران
-                const usersContainer = document.getElementById('usersPredictionsContainer');
-                usersContainer.innerHTML = '';
-
-                if (!users || users.length === 0) {
-                    usersContainer.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:30px 0;">کاربری یافت نشد.</p>';
-                    return;
+                for (var qi = 0; qi < results.length; qi++) {
+                    if (results[qi].error) throw new Error('DB error: ' + results[qi].error.message);
                 }
 
-                users.forEach((u, ui) => {
-                    const isOpen = openedUsers.includes(u.username);
-                    const userPreds = allPredictions?.filter(p => p.username === u.username) || [];
-                    const initial = u.username.charAt(0).toUpperCase();
+                var users         = results[0].data || [];
+                var matches       = results[1].data || [];
+                var teams         = results[2].data || [];
+                var folders       = results[3].data || [];
+                var allPredictions = results[4].data || [];
+                // زمان سرور برای مقایسه با زمان بازی‌ها (به وقت تهران UTC+3:30)
+                var serverNowMs = results[5].data ? new Date(results[5].data).getTime() : Date.now();
+                var tehranOffsetMs = 3.5 * 60 * 60 * 1000;
 
-                    const accord = document.createElement('div');
-                    accord.className = `user-accord${isOpen ? ' open' : ''}`;
-                    accord.style.animationDelay = `${ui * 0.04}s`;
+                // آیا زمان یک بازی (به وقت تهران) فرا رسیده؟
+                function isMatchStarted(match) {
+                    if (!match.match_date || !match.match_time) return true; // بدون تاریخ = نمایش
+                    var matchLocalMs = new Date(match.match_date + 'T' + match.match_time).getTime();
+                    var matchUTC = matchLocalMs - tehranOffsetMs;
+                    return serverNowMs >= matchUTC;
+                }
 
-                    accord.innerHTML = `
-                        <div class="user-accord-head" onclick="toggleUserAccordion('${u.username}')">
-                            <div class="user-accord-name">
-                                <div class="user-accord-avatar">${initial}</div>
-                                ${u.username}
-                            </div>
-                            <div class="accord-toggle">▾</div>
-                        </div>
-                        <div class="user-accord-body" id="body-${u.username}"></div>
-                    `;
+                var premiumSet = new Set(
+                    users.filter(function(u) { return u.is_eligible_for_reward === true; })
+                         .map(function(u) { return u.username; })
+                );
 
-                    usersContainer.appendChild(accord);
+                var teamsMap = {};
+                teams.forEach(function(t) { teamsMap[t.id] = t.name; });
 
-                    if (isOpen) {
-                        const bodyEl = accord.querySelector('.user-accord-body');
-                        folders?.forEach(folder => {
-                            const folderMatches = matches?.filter(m => String(m.folder_id) === String(folder.id)) || [];
-                            if (folderMatches.length === 0) return;
+                var totalMatchesCount = matches.length;
+                var settledMatchesCount = matches.filter(function(m) {
+                    return m.home_score !== null && m.away_score !== null;
+                }).length;
 
-                            const folderKey = `${u.username}_${folder.id}`;
-                            const isFolderOpen = openedUserFolders.includes(folderKey);
+                var userScores = {};
+                var userPredictionsCount = {};
+                var userSettledPredictionsCount = {};
+                users.forEach(function(u) {
+                    userScores[u.username] = 0;
+                    userPredictionsCount[u.username] = 0;
+                    userSettledPredictionsCount[u.username] = 0;
+                });
 
-                            const innerFolder = document.createElement('div');
-                            innerFolder.className = `inner-folder${isFolderOpen ? ' open' : ''}`;
-
-                            const headDiv = document.createElement('div');
-                            headDiv.className = 'inner-folder-head';
-                            headDiv.innerHTML = `<span>📁 ${folder.name}</span><span style="font-size:11px; color:var(--text-muted);">${isFolderOpen ? '▴ بستن' : '▾ باز کردن'}</span>`;
-                            headDiv.addEventListener('click', e => { e.stopPropagation(); toggleFolderAccordion(folderKey); });
-
-                            const bodyDiv = document.createElement('div');
-                            bodyDiv.className = 'inner-folder-body';
-
-                            folderMatches.forEach(match => {
-                                const pred = userPreds.find(p => String(p.match_id) === String(match.id));
-                                const homeName = teamsMap[match.team_home_id] || '—';
-                                const awayName = teamsMap[match.team_away_id] || '—';
-                                const realH = match.home_score !== null && match.home_score !== undefined ? match.home_score : '—';
-                                const realA = match.away_score !== null && match.away_score !== undefined ? match.away_score : '—';
-
-                                const matchRow = document.createElement('div');
-                                matchRow.className = 'pred-match-row';
-
-                                let predHtml = pred
-                                    ? `<div class="pred-score user-pred"><span>${pred.home_prediction}</span><span style="color:var(--text-muted)">-</span><span>${pred.away_prediction}</span></div>
-                                       <div class="pred-label">پیش‌بینی</div>`
-                                    : `<div class="no-pred-badge">ثبت نشده</div>`;
-
-                                let realHtml = (realH !== '—')
-                                    ? `<div class="pred-score real-score"><span>${realH}</span><span style="color:var(--text-muted)">-</span><span>${realA}</span></div>
-                                       <div class="pred-label">نتیجه واقعی</div>`
-                                    : `<div style="font-size:10px; color:var(--text-muted);">در انتظار</div>`;
-
-                                matchRow.innerHTML = `
-                                    <span class="pred-team right">${homeName}</span>
-                                    <div class="pred-center">${predHtml}${realHtml}</div>
-                                    <span class="pred-team left">${awayName}</span>
-                                `;
-                                bodyDiv.appendChild(matchRow);
-                            });
-
-                            innerFolder.appendChild(headDiv);
-                            innerFolder.appendChild(bodyDiv);
-                            bodyEl.appendChild(innerFolder);
-                        });
+                // شمارش پیش‌بینی‌ها — با deduplicate بر اساس match_id برای هر کاربر
+                var seenPreds = {}; // "username_matchId" -> true
+                allPredictions.forEach(function(pred) {
+                    if (userPredictionsCount[pred.username] === undefined) return;
+                    var key = pred.username + '_' + String(pred.match_id);
+                    if (seenPreds[key]) return; // تکراری — رد کن
+                    var matchForPred = matches.find(function(m) { return String(m.id) === String(pred.match_id); });
+                    if (matchForPred && pred.home_prediction !== null && pred.away_prediction !== null &&
+                        pred.home_prediction !== '' && pred.away_prediction !== '') {
+                        userPredictionsCount[pred.username]++;
+                        if (matchForPred.home_score !== null && matchForPred.away_score !== null) {
+                            userSettledPredictionsCount[pred.username]++;
+                        }
+                        seenPreds[key] = true;
                     }
                 });
 
+                // محاسبه امتیازات — با deduplicate کامل (اولین رکورد معتبر هر username+match)
+                var SENTINEL_P = '99';
+                var isValidP = function(p) {
+                    return p.home_prediction !== null && p.away_prediction !== null &&
+                        p.home_prediction !== '' && p.away_prediction !== '' &&
+                        !(String(p.home_prediction) === SENTINEL_P && String(p.away_prediction) === SENTINEL_P);
+                };
+                // ساخت ایندکس: اولین رکورد معتبر برای هر username_matchId
+                var scoreIdx = {};
+                allPredictions
+                    .filter(function(p) { return isValidP(p); })
+                    .sort(function(a, b) { return Number(a.id) - Number(b.id); })
+                    .forEach(function(pred) {
+                        var key = pred.username + '_' + String(pred.match_id);
+                        if (!scoreIdx[key]) scoreIdx[key] = pred;
+                    });
+                Object.keys(scoreIdx).forEach(function(key) {
+                    var pred = scoreIdx[key];
+                    if (!users.some(function(u) { return u.username === pred.username; })) return;
+                    var match = matches.find(function(m) { return String(m.id) === String(pred.match_id); });
+                    if (!match || match.home_score === null || match.away_score === null) return;
+                    var prH = parseInt(pred.home_prediction), prA = parseInt(pred.away_prediction);
+                    var reH = parseInt(match.home_score),    reA = parseInt(match.away_score);
+                    if (isNaN(prH) || isNaN(prA) || isNaN(reH) || isNaN(reA)) return;
+                    if (userScores[pred.username] === undefined) userScores[pred.username] = 0;
+                    var rW = reH > reA ? 1 : reA > reH ? 2 : 0;
+                    var pW = prH > prA ? 1 : prA > prH ? 2 : 0;
+                    if (prH === reH && prA === reA)               userScores[pred.username] += 10;
+                    else if (rW === pW && (reH-reA) === (prH-prA)) userScores[pred.username] += 7;
+                    else if (rW === pW)                            userScores[pred.username] += 5;
+                    else                                           userScores[pred.username] += 2;
+                });
+
+                // ─── امتیاز کسب‌شده در آخرین بازی تعیین‌شده (نتیجه‌دار) ───
+                var settledMatches = matches.filter(function(m) {
+                    return m.home_score !== null && m.away_score !== null;
+                }).sort(function(a, b) { return Number(b.id) - Number(a.id); });
+
+                var lastSettledMatch = settledMatches.length > 0 ? settledMatches[0] : null;
+                var lastMatchPoints = {};
+
+                if (lastSettledMatch) {
+                    var reH2 = parseInt(lastSettledMatch.home_score), reA2 = parseInt(lastSettledMatch.away_score);
+                    var rW2 = reH2 > reA2 ? 1 : reA2 > reH2 ? 2 : 0;
+
+                    allPredictions.forEach(function(pred) {
+                        if (String(pred.match_id) !== String(lastSettledMatch.id)) return;
+                        if (!users.some(function(u) { return u.username === pred.username; })) return;
+                        var prH = parseInt(pred.home_prediction), prA = parseInt(pred.away_prediction);
+                        if (isNaN(prH) || isNaN(prA)) return;
+                        var pW2 = prH > prA ? 1 : prA > prH ? 2 : 0;
+                        var pts;
+                        if (prH === reH2 && prA === reA2)                 pts = 10;
+                        else if (rW2 === pW2 && (reH2-reA2) === (prH-prA)) pts = 7;
+                        else if (rW2 === pW2)                             pts = 5;
+                        else                                               pts = 2;
+                        lastMatchPoints[pred.username] = pts;
+                    });
+                }
+
+                function lastPointsBadge(username) {
+                    if (!lastSettledMatch) return '';
+                    var pts = lastMatchPoints[username];
+                    if (pts === undefined) return '';
+                    return '<span class="lb-last-points">+' + pts + '</span>';
+                }
+
+                function settledRatioBadge(item) {
+                    return '<span class="lb-settled-ratio">' + item.settledPredCount + '/' + settledMatchesCount + '</span>';
+                }
+
+                var leaderboardArray = Object.keys(userScores).map(function(un) {
+                    return {
+                        username: un,
+                        score: userScores[un],
+                        predCount: userPredictionsCount[un] || 0,
+                        settledPredCount: userSettledPredictionsCount[un] || 0
+                    };
+                }).sort(function(a, b) { return b.score - a.score; });
+
+                // ─── محاسبه تغییر رتبه نسبت به بار قبل ───
+                var prevRanksRaw = localStorage.getItem('prevLeaderboardRanks');
+                var prevRanks = prevRanksRaw ? JSON.parse(prevRanksRaw) : {};
+                var currentRanks = {};
+                leaderboardArray.forEach(function(item, i) { currentRanks[item.username] = i + 1; });
+
+                function rankChangeBadge(username, currentRank) {
+                    var prevRank = prevRanks[username];
+                    if (prevRank === undefined) return '';
+                    var diff = prevRank - currentRank; // مثبت = صعود
+                    var arrow = '';
+                    var cls = '';
+                    if (diff > 0) {
+                        cls = 'up';
+                        arrow = diff >= 3 ? '▲▲' : '▲';
+                    } else if (diff < 0) {
+                        cls = 'down';
+                        arrow = diff <= -3 ? '▼▼' : '▼';
+                    } else {
+                        cls = 'same';
+                        arrow = '➖';
+                    }
+                    return '<span class="lb-rank-change ' + cls + '">' + arrow + '</span>';
+                }
+
+                localStorage.setItem('prevLeaderboardRanks', JSON.stringify(currentRanks));
+
+                // ─── ذخیره داده برای رتبه‌بندی بازی ───
+                window._rankingData = {
+                    users: users,
+                    matches: matches,
+                    teams: teams,
+                    teamsMap: teamsMap,
+                    leaderboardArray: leaderboardArray,
+                    totalMatchesCount: totalMatchesCount,
+                    settledMatchesCount: settledMatchesCount,
+                    premiumSet: premiumSet,
+                    prevRanks: prevRanks,
+                    lastMatchPoints: lastMatchPoints,
+                    lastSettledMatch: lastSettledMatch,
+                    currentLoggedInUser: currentLoggedInUser,
+                    scoreIdx: scoreIdx
+                };
+
+                // ─── ساخت دکمه‌های رتبه‌بندی بازی ───
+                var perMatchBtns = document.getElementById('perMatchBtns');
+                if (perMatchBtns) {
+                    perMatchBtns.innerHTML = '';
+                    var settledForBtns = matches.filter(function(m) { return m.home_score !== null && m.away_score !== null; });
+                    settledForBtns.forEach(function(m, idx) {
+                        var hName = teamsMap[m.team_home_id] || '—';
+                        var aName = teamsMap[m.team_away_id] || '—';
+                        var btn = document.createElement('button');
+                        btn.id = 'btnRankM' + m.id;
+                        btn.className = 'match-rank-btn';
+                        btn.style.cssText = 'padding:5px 11px;border-radius:20px;border:1px solid var(--border-subtle);background:var(--bg-elevated);color:var(--text-muted);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap;';
+                        btn.textContent = 'بازی ' + (idx + 1) + ': ' + hName + ' – ' + aName;
+                        btn.setAttribute('onclick', 'showMatchRanking("' + m.id + '")');
+                        perMatchBtns.appendChild(btn);
+                    });
+                }
+
+                // ─── رتبه‌بندی اصلی ───
+                if (lbEl) {
+                    renderLeaderboard(lbEl, leaderboardArray, totalMatchesCount, settledMatchesCount,
+                        premiumSet, prevRanks, lastMatchPoints, lastSettledMatch, currentLoggedInUser);
+                }
+
+                // ─── رتبه‌بندی چالش ───
+                var challengeArray = leaderboardArray.filter(function(item) { return premiumSet.has(item.username); });
+                if (chEl) {
+                    chEl.innerHTML = '';
+                    var settledCount = matches.filter(function(m) { return m.home_score !== null && m.away_score !== null; }).length;
+                    var isFinished = settledCount === 104 && totalMatchesCount === 104;
+
+                    if (isFinished && challengeArray.length > 0) {
+                        var champ = challengeArray[0];
+                        var cb = document.createElement('div');
+                        cb.style.cssText = 'background:linear-gradient(135deg,rgba(240,192,64,0.12),rgba(15,18,36,0.8));border:2px dashed #f0c040;border-radius:16px;padding:20px;text-align:center;margin-bottom:16px;';
+                        cb.innerHTML =
+                            '<div style="font-size:36px;margin-bottom:8px;">👑</div>' +
+                            '<div style="font-size:13px;color:#ffee55;margin-bottom:6px;">برنده چالش مالی</div>' +
+                            '<div style="background:linear-gradient(90deg,#f0c040,#ffee55);color:#000;padding:4px 18px;border-radius:50px;font-weight:900;display:inline-block;font-size:18px;margin-bottom:8px;">✨ ' + champ.username + ' ✨</div>' +
+                            '<div style="font-size:12px;color:#8a8f98;">امتیاز: ' + champ.score + '</div>';
+                        chEl.appendChild(cb);
+                    }
+
+                    if (challengeArray.length === 0) {
+                        chEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:30px 0;">هیچ کاربری در چالش مالی شرکت نکرده است.</p>';
+                    } else {
+                        challengeArray.forEach(function(item, i) {
+                            var rank = i + 1;
+                            var rc = rank <= 3 ? 'rank-' + rank : '';
+                            var isMe = item.username === currentLoggedInUser;
+                            var row = document.createElement('div');
+                            row.className = 'lb-row' + (isMe ? ' is-me' : '');
+                            row.style.animationDelay = (i * 0.04) + 's';
+                            row.innerHTML =
+                                '<div class="lb-left">' +
+                                    '<div class="rank-badge ' + rc + '">' + rank + '</div>' +
+                                    '<div class="lb-meta">' +
+                                        '<span class="lb-name' + (isMe ? ' is-me' : '') + '" style="display:flex;align-items:center;gap:4px;">' +
+                                            item.username +
+                                            ' <span class="premium-badge">💎 چالش</span>' +
+                                        '</span>' +
+                                        '<span class="lb-sub">' + item.predCount + ' از ' + totalMatchesCount + ' پیش‌بینی</span>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<div class="lb-right">' +
+                                    rankChangeBadge(item.username, rank) +
+                                    '<div style="display:flex;align-items:center;gap:6px;">' +
+                                        '<div class="lb-score">' + item.score + '</div>' +
+                                        settledRatioBadge(item) +
+                                        lastPointsBadge(item.username) +
+                                    '</div>' +
+                                '</div>';
+                            chEl.appendChild(row);
+                        });
+                    }
+                }
+
+                // ─── پیش‌بینی کاربران ───
+                if (usEl) {
+                    usEl.innerHTML = '';
+                    if (users.length === 0) {
+                        usEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:30px 0;">کاربری یافت نشد.</p>';
+                        return;
+                    }
+
+                    // نمایش پیش‌بینی‌های یک بازی خاص (وقتی از داشبورد با فیلتر آمده‌ایم)
+                    if (window._filterMatchId) {
+                        var fMatchId = String(window._filterMatchId);
+                        var fHome = window._filterMatchHome || '';
+                        var fAway = window._filterMatchAway || '';
+                        var fMatch = matches.find(function(m) { return String(m.id) === fMatchId; });
+                        var fRealH = (fMatch && fMatch.home_score !== null && fMatch.home_score !== undefined) ? fMatch.home_score : '—';
+                        var fRealA = (fMatch && fMatch.away_score !== null && fMatch.away_score !== undefined) ? fMatch.away_score : '—';
+
+                        var matchPreds = allPredictions.filter(function(p) {
+                            return String(p.match_id) === fMatchId && p.home_prediction !== null && p.away_prediction !== null && p.home_prediction !== '' && p.away_prediction !== '';
+                        });
+                        var predUserSet = {};
+                        matchPreds.forEach(function(p) { if (!predUserSet[p.username]) predUserSet[p.username] = p; });
+
+                        var reH3 = parseInt(fRealH), reA3 = parseInt(fRealA);
+                        var hasResult3 = !isNaN(reH3) && !isNaN(reA3);
+
+                        function calcPts3(prH, prA) {
+                            if (!hasResult3) return null;
+                            var rW = reH3>reA3?1:(reA3>reH3?2:0), pW = prH>prA?1:(prA>prH?2:0);
+                            if (prH===reH3&&prA===reA3) return 10;
+                            if (rW===pW&&(reH3-reA3)===(prH-prA)) return 7;
+                            if (rW===pW) return 5;
+                            return 2;
+                        }
+
+                        var groups3 = {};
+                        Object.values(predUserSet).forEach(function(p) {
+                            var key = p.home_prediction + '-' + p.away_prediction;
+                            if (!groups3[key]) {
+                                var pts3 = calcPts3(parseInt(p.home_prediction), parseInt(p.away_prediction));
+                                groups3[key] = { home: p.home_prediction, away: p.away_prediction, points: pts3, users: [] };
+                            }
+                            groups3[key].users.push(p.username);
+                        });
+                        var sortedG3 = Object.values(groups3).sort(function(a, b) {
+                            if (hasResult3 && (b.points ?? -1) !== (a.points ?? -1)) return (b.points ?? -1) - (a.points ?? -1);
+                            return b.users.length - a.users.length;
+                        });
+
+                        var notPred3 = users.map(function(u) { return u.username; })
+                            .filter(function(n) { return !predUserSet[n]; })
+                            .sort(function(a,b) { return a.localeCompare(b,'fa'); });
+
+                        function ptsBadge3(pts) {
+                            if (pts === null) return '';
+                            var cfg = {
+                                10: {fg:'var(--green)',bg:'rgba(52,211,153,0.15)',br:'rgba(52,211,153,0.3)'},
+                                7:  {fg:'var(--accent)',bg:'rgba(99,133,255,0.15)',br:'rgba(99,133,255,0.3)'},
+                                5:  {fg:'var(--gold)',bg:'rgba(240,192,64,0.15)',br:'rgba(240,192,64,0.3)'},
+                                2:  {fg:'var(--text-muted)',bg:'var(--bg-elevated)',br:'var(--border-subtle)'}
+                            };
+                            var c = cfg[pts] || cfg[2];
+                            return '<span style="font-size:11px;font-weight:800;color:'+c.fg+';background:'+c.bg+';border:1px solid '+c.br+';padding:3px 9px;border-radius:7px;white-space:nowrap;">⭐ '+pts+' امتیاز</span>';
+                        }
+
+                        var filterBox = document.createElement('div');
+                        filterBox.style.cssText = 'background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:14px;padding:14px;margin-bottom:18px;';
+                        filterBox.innerHTML =
+                            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
+                                '<div style="font-size:13px;font-weight:800;color:var(--text-primary);">👀 پیش‌بینی‌های این بازی</div>' +
+                                '<button onclick="window._filterMatchId=null;this.closest(\'div[style]\').remove();" style="font-size:11px;background:var(--bg-card);border:1px solid var(--border-subtle);color:var(--text-muted);padding:4px 10px;border-radius:8px;cursor:pointer;font-family:var(--font);">✕ بستن</button>' +
+                            '</div>' +
+                            '<div style="background:var(--gold-dim);border:1px dashed rgba(240,192,64,0.25);border-radius:10px;padding:10px 12px;margin-bottom:10px;text-align:center;">' +
+                                '<div style="font-size:10px;color:var(--gold);opacity:0.8;margin-bottom:4px;">نتیجه واقعی</div>' +
+                                '<div style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px;font-weight:800;color:var(--text-primary);">' +
+                                    '<span>'+fHome+'</span><span style="color:var(--gold);">'+fRealH+' – '+fRealA+'</span><span>'+fAway+'</span>' +
+                                '</div>' +
+                            '</div>' +
+                            sortedG3.map(function(g) {
+                                return '<div style="margin-bottom:10px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:10px;overflow:hidden;">' +
+                                    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:rgba(99,133,255,0.06);border-bottom:1px solid var(--border-subtle);">' +
+                                        '<span style="font-size:13px;font-weight:800;color:var(--accent);display:flex;align-items:center;gap:6px;">' +
+                                            '<span style="font-size:10px;color:var(--text-muted);font-weight:600;">'+fHome+'</span>' +
+                                            '<span>'+g.home+' – '+g.away+'</span>' +
+                                            '<span style="font-size:10px;color:var(--text-muted);font-weight:600;">'+fAway+'</span>' +
+                                        '</span>' +
+                                        ptsBadge3(g.points) +
+                                    '</div>' +
+                                    '<div style="padding:8px 12px;display:flex;flex-direction:column;gap:6px;">' +
+                                        g.users.map(function(u) { return '<span style="font-size:13px;color:var(--text-primary);font-weight:600;">👤 '+u+'</span>'; }).join('') +
+                                    '</div>' +
+                                '</div>';
+                            }).join('') +
+                            (notPred3.length > 0 ?
+                                '<div style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:10px;overflow:hidden;">' +
+                                '<div style="padding:8px 12px;background:rgba(248,113,113,0.06);border-bottom:1px solid var(--border-subtle);">' +
+                                    '<span style="font-size:12px;font-weight:800;color:var(--red);">پیش‌بینی نکرده‌اند</span></div>' +
+                                '<div style="padding:8px 12px;display:flex;flex-direction:column;gap:6px;">' +
+                                    notPred3.map(function(u) { return '<span style="font-size:13px;color:var(--text-muted);font-weight:600;">👤 '+u+'</span>'; }).join('') +
+                                '</div></div>' : ''
+                            );
+                        usEl.appendChild(filterBox);
+                    }
+
+                    users.forEach(function(u, ui) {
+                        var isOpen = openedUsers.indexOf(u.username) !== -1;
+                        var userPreds = allPredictions.filter(function(p) { return p.username === u.username; });
+                        var initial = u.username.charAt(0).toUpperCase();
+                        var accord = document.createElement('div');
+                        accord.className = 'user-accord' + (isOpen ? ' open' : '');
+                        accord.style.animationDelay = (ui * 0.04) + 's';
+
+                        var headDiv = document.createElement('div');
+                        headDiv.className = 'user-accord-head';
+                        headDiv.innerHTML =
+                            '<div class="user-accord-name">' +
+                                '<div class="user-accord-avatar">' + initial + '</div>' +
+                                u.username +
+                            '</div>' +
+                            '<div class="accord-toggle">▾</div>';
+                        headDiv.addEventListener('click', function() { toggleUserAccordion(u.username); });
+
+                        var bodyDiv = document.createElement('div');
+                        bodyDiv.className = 'user-accord-body';
+                        bodyDiv.id = 'body-' + u.username;
+
+                        accord.appendChild(headDiv);
+                        accord.appendChild(bodyDiv);
+                        usEl.appendChild(accord);
+
+                        if (isOpen) {
+                            folders.forEach(function(folder) {
+                                var folderMatches = matches.filter(function(m) { return String(m.folder_id) === String(folder.id); });
+                                if (folderMatches.length === 0) return;
+
+                                var folderKey = u.username + '_' + folder.id;
+                                var isFolderOpen = openedUserFolders.indexOf(folderKey) !== -1;
+
+                                var innerFolder = document.createElement('div');
+                                innerFolder.className = 'inner-folder' + (isFolderOpen ? ' open' : '');
+
+                                var fHead = document.createElement('div');
+                                fHead.className = 'inner-folder-head';
+                                fHead.innerHTML =
+                                    '<span>📁 ' + folder.name + '</span>' +
+                                    '<span style="font-size:11px;color:var(--text-muted);">' + (isFolderOpen ? '▴ بستن' : '▾ باز کردن') + '</span>';
+                                fHead.addEventListener('click', function(e) { e.stopPropagation(); toggleFolderAccordion(folderKey); });
+
+                                var fBody = document.createElement('div');
+                                fBody.className = 'inner-folder-body';
+
+                                folderMatches.forEach(function(match) {
+                                    var pred = userPreds.find(function(p) { return String(p.match_id) === String(match.id); });
+                                    var homeName = teamsMap[match.team_home_id] || '—';
+                                    var awayName = teamsMap[match.team_away_id] || '—';
+                                    var realH = (match.home_score !== null && match.home_score !== undefined) ? match.home_score : '—';
+                                    var realA = (match.away_score !== null && match.away_score !== undefined) ? match.away_score : '—';
+
+                                    var matchRow = document.createElement('div');
+                                    matchRow.className = 'pred-match-row';
+
+                                    var hasPred = !!pred && pred.home_prediction !== null && pred.away_prediction !== null
+                                        && pred.home_prediction !== '' && pred.away_prediction !== '';
+
+                                    // ─── آیا زمان بازی فرا رسیده؟ ───
+                                    var matchStarted = isMatchStarted(match);
+                                    // مدیر همیشه همه پیش‌بینی‌ها را می‌بیند
+                                    // کاربر: پیش‌بینی خودش را همیشه، پیش‌بینی بقیه را فقط بعد از شروع بازی
+                                    var isViewingOwnProfile = (u.username === currentLoggedInUser);
+                                    var canSeePred = currentUserRole === 'admin' || isViewingOwnProfile || matchStarted;
+
+                                    // ─── محاسبه امتیاز کسب‌شده از این بازی (در صورت ثبت نتیجه) ───
+                                    var matchPointsBadge = '';
+                                    if (hasPred && canSeePred && realH !== '—' && realA !== '—') {
+                                        var prH = parseInt(pred.home_prediction), prA = parseInt(pred.away_prediction);
+                                        var reH = parseInt(realH), reA = parseInt(realA);
+                                        if (!isNaN(prH) && !isNaN(prA) && !isNaN(reH) && !isNaN(reA)) {
+                                            var rW = reH > reA ? 1 : reA > reH ? 2 : 0;
+                                            var pW = prH > prA ? 1 : prA > prH ? 2 : 0;
+                                            var pts;
+                                            if (prH === reH && prA === reA) pts = 10;
+                                            else if (rW === pW && (reH-reA) === (prH-prA)) pts = 7;
+                                            else if (rW === pW) pts = 5;
+                                            else pts = 2;
+                                            matchPointsBadge = '<span class="lb-last-points" style="margin-top:4px;">+' + pts + ' امتیاز</span>';
+                                        }
+                                    }
+
+                                    var predHtml;
+                                    if (!canSeePred) {
+                                        // زمان بازی نرسیده و این کاربر دیگری است
+                                        predHtml = '<div style="font-size:10px;color:var(--text-muted);background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:6px;padding:4px 8px;">🔒 قبل از بازی</div>';
+                                    } else if (hasPred) {
+                                        predHtml = '<div class="pred-score user-pred"><span>' + pred.home_prediction + '</span><span style="color:var(--text-muted)">-</span><span>' + pred.away_prediction + '</span></div><div class="pred-label">پیش‌بینی</div>' + matchPointsBadge;
+                                    } else {
+                                        predHtml = '<div class="no-pred-badge">ثبت نشده</div>';
+                                    }
+                                    var realHtml = realH !== '—'
+                                        ? '<div class="pred-score real-score"><span>' + realH + '</span><span style="color:var(--text-muted)">-</span><span>' + realA + '</span></div><div class="pred-label">نتیجه واقعی</div>'
+                                        : '<div style="font-size:10px;color:var(--text-muted);">در انتظار</div>';
+
+                                    matchRow.innerHTML =
+                                        '<span class="pred-team right">' + homeName + '</span>' +
+                                        '<div class="pred-center">' + predHtml + realHtml + '</div>' +
+                                        '<span class="pred-team left">' + awayName + '</span>';
+                                    fBody.appendChild(matchRow);
+                                });
+
+                                innerFolder.appendChild(fHead);
+                                innerFolder.appendChild(fBody);
+                                bodyDiv.appendChild(innerFolder);
+                            });
+                        }
+                    });
+                }
+
             } catch (err) {
-                console.error("خطا در بارگذاری نتایج:", err);
+                console.error('خطا در بارگذاری نتایج:', err);
+                var errHtml = '<p style="text-align:center;color:#ff3b30;padding:20px;font-size:13px;">⚠️ خطا: ' + err.message + '</p>';
+                if (lbEl) lbEl.innerHTML = errHtml;
+                if (chEl) chEl.innerHTML = errHtml;
+                if (usEl) usEl.innerHTML = errHtml;
             }
         }
 
         function toggleUserAccordion(username) {
-            if (openedUsers.includes(username)) {
-                openedUsers = openedUsers.filter(u => u !== username);
-                openedUserFolders = openedUserFolders.filter(k => !k.startsWith(`${username}_`));
+            var idx = openedUsers.indexOf(username);
+            if (idx !== -1) {
+                openedUsers.splice(idx, 1);
+                openedUserFolders = openedUserFolders.filter(function(k) { return k.indexOf(username + '_') !== 0; });
             } else {
                 openedUsers.push(username);
             }
@@ -453,14 +972,102 @@
         }
 
         function toggleFolderAccordion(folderKey) {
-            if (openedUserFolders.includes(folderKey)) {
-                openedUserFolders = openedUserFolders.filter(k => k !== folderKey);
-            } else {
-                openedUserFolders.push(folderKey);
-            }
+            var idx = openedUserFolders.indexOf(folderKey);
+            if (idx !== -1) { openedUserFolders.splice(idx, 1); }
+            else { openedUserFolders.push(folderKey); }
             initResultsPage();
+        }
+
+        // ─── بکاپ اکسل ───
+        document.addEventListener('DOMContentLoaded', function() {
+            var btn = document.getElementById('backupBtn');
+            if (btn) btn.addEventListener('click', exportToExcel);
+        });
+
+        async function exportToExcel() {
+            var btn = document.getElementById('backupBtn');
+            if (btn) { btn.innerHTML = '<span dir="rtl">⏳ در حال دریافت...</span>'; btn.disabled = true; }
+
+            try {
+                var results = await Promise.all([
+                    supabaseClient.from('project_users').select('username').order('username', {ascending: true}),
+                    supabaseClient.from('matches').select('*').order('id', {ascending: true}),
+                    supabaseClient.from('teams').select('*'),
+                    supabaseClient.from('folders').select('*').order('id', {ascending: true}),
+                    supabaseClient.from('predictions').select('*')
+                ]);
+
+                var users        = results[0].data || [];
+                var matches      = results[1].data || [];
+                var teams        = results[2].data || [];
+                var folders      = results[3].data || [];
+                var allPreds     = results[4].data || [];
+
+                var teamsMap = {};
+                teams.forEach(function(t) { teamsMap[t.id] = t.name; });
+
+                // ایندکس پیش‌بینی‌ها: "username_matchId" -> predStr
+                var predIndex = {};
+                allPreds.forEach(function(p) {
+                    var key = p.username + '_' + String(p.match_id);
+                    if (!predIndex[key] && p.home_prediction !== null && p.away_prediction !== null) {
+                        predIndex[key] = p.home_prediction + ' - ' + p.away_prediction;
+                    }
+                });
+
+                var wb = XLSX.utils.book_new();
+
+                // یک شیت برای هر پوشه
+                folders.forEach(function(folder) {
+                    var folderMatches = matches.filter(function(m) {
+                        return String(m.folder_id) === String(folder.id);
+                    });
+                    if (folderMatches.length === 0) return;
+
+                    // ردیف هدر: کاربر | بازی۱ | بازی۲ | ...
+                    var headerRow = ['کاربر'];
+                    folderMatches.forEach(function(m) {
+                        var home = teamsMap[m.team_home_id] || '?';
+                        var away = teamsMap[m.team_away_id] || '?';
+                        headerRow.push(home + ' - ' + away);
+                    });
+
+                    var sheetData = [headerRow];
+
+                    // یک ردیف برای هر کاربر
+                    users.forEach(function(u) {
+                        var row = [u.username];
+                        folderMatches.forEach(function(m) {
+                            var key = u.username + '_' + String(m.id);
+                            row.push(predIndex[key] || '—');
+                        });
+                        sheetData.push(row);
+                    });
+
+                    var ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+                    // عرض ستون‌ها
+                    var cols = [{wch: 18}];
+                    folderMatches.forEach(function() { cols.push({wch: 22}); });
+                    ws['!cols'] = cols;
+
+                    var sheetName = folder.name.substring(0, 31);
+                    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+                });
+
+                var today = new Date();
+                var dateStr = today.getFullYear() + '-' + (today.getMonth()+1) + '-' + today.getDate();
+                XLSX.writeFile(wb, 'predictions-backup-' + dateStr + '.xlsx');
+
+            } catch(err) {
+                console.error('Excel export error:', err);
+                alert('خطا در ساخت فایل اکسل: ' + err.message);
+            } finally {
+                if (btn) { btn.innerHTML = '<span dir="rtl">📥 بکاپ</span>'; btn.disabled = false; }
+            }
         }
     </script>
     <script src="rewardRegistration.js"></script>
+    <style>#rewardRegistrationBox { display: none !important; }</style>
 </body>
 </html>

@@ -54,7 +54,16 @@ async function checkTournamentCompletion() {
             })).sort((a, b) => b.score - a.score);
 
             if (leaderboard.length > 0) {
-                renderChampionBanner(leaderboard[0].username);
+                // برنده چالش مالی (از بین کاربران پریمیوم)
+                const { data: premiumUsers } = await supabaseClient
+                    .from('project_users')
+                    .select('username')
+                    .eq('is_eligible_for_reward', true);
+                const premiumSet = new Set((premiumUsers || []).map(p => p.username));
+                const challengeLeaderboard = leaderboard.filter(item => premiumSet.has(item.username));
+                const challengeChamp = challengeLeaderboard.length > 0 ? challengeLeaderboard[0].username : null;
+
+                renderChampionBanner(leaderboard[0].username, challengeChamp);
             }
         }
     } catch (error) {
@@ -62,7 +71,7 @@ async function checkTournamentCompletion() {
     }
 }
 
-function renderChampionBanner(championName) {
+function renderChampionBanner(championName, challengeChampName) {
     const appContent = document.querySelector('.app-content');
     if (!appContent) return;
     if (document.getElementById('championCelebrationBox')) return;
@@ -146,6 +155,11 @@ function renderChampionBanner(championName) {
                 <span>🎁 برای اهدای جایزه وارد شوید</span>
             </button>
         </div>
+        ${challengeChampName ? `
+        <div style="margin-top:20px;padding:14px;background:rgba(240,192,64,0.08);border:1px solid rgba(240,192,64,0.2);border-radius:12px;">
+            <div style="font-size:12px;color:#ffee55;margin-bottom:6px;">🏅 برنده چالش مالی</div>
+            <div style="font-size:16px;font-weight:800;color:#f0c040;">${challengeChampName}</div>
+        </div>` : ''}
         <p class="champion-subtitle">
             شما با کسب بالاترین امتیاز در صدر جدول، <b>برنده قاطع این دوره از رقابت‌های پیش‌بینی</b> شدید! 🏆⚽
         </p>
@@ -186,14 +200,36 @@ async function handleRewardClaim(championName) {
 
         if (currentLoggedInUser === championName) {
             if (champData && champData.is_eligible_for_reward) {
-                showFloatingToast(`🎉 تبریک ${championName} عزیز! چالش شما تایید شده و شماره کارت (${champData.card_number}) در سیستم ثبت است.`, "success");
+                showFloatingToast(`🎉 تبریک ${championName} عزیز! چالش شما تایید شده است.`, "success");
+                if (champData.card_number) {
+                    // نمایش شماره کارت در یک باکس مرکزی
+                    const existingBox = document.getElementById('cardNumberDisplayBox');
+                    if (!existingBox) {
+                        const cardBox = document.createElement('div');
+                        cardBox.id = 'cardNumberDisplayBox';
+                        cardBox.style.cssText = 'margin-top:16px;padding:14px 20px;background:rgba(52,211,153,0.08);border:1.5px solid rgba(52,211,153,0.3);border-radius:14px;text-align:center;';
+                        cardBox.innerHTML = `<div style="font-size:11px;color:#34d399;margin-bottom:8px;opacity:0.8;">💳 شماره کارت ثبت‌شده</div><div style="font-size:18px;font-weight:900;color:#ffffff;letter-spacing:2px;direction:ltr;">${champData.card_number}</div>`;
+                        const btn = document.getElementById('claimRewardBtn');
+                        if (btn && btn.parentNode) btn.parentNode.insertBefore(cardBox, btn.nextSibling);
+                    }
+                }
             } else {
                 showFloatingToast(`🎉 اول شدید! اما چون طرح مالی جایزه را فعال نکرده بودید، مشمول جایزه مسابقه نمی‌شوید.`, "warning");
             }
         } else {
             if (champData && champData.is_eligible_for_reward && champData.card_number) {
                 if (isCurrentUserPremium) {
-                    showFloatingToast(`💸 طبق تعهد، شما باید ۳۰۰,۰۰۰ تومان به حساب ${championName} واریز کنید. شماره کارت: ${champData.card_number}`, "warning");
+                    // نمایش شماره کارت در باکس مرکزی
+                    const existingBox = document.getElementById('cardNumberDisplayBox');
+                    if (!existingBox) {
+                        const cardBox = document.createElement('div');
+                        cardBox.id = 'cardNumberDisplayBox';
+                        cardBox.style.cssText = 'margin-top:16px;padding:14px 20px;background:rgba(255,165,0,0.08);border:1.5px solid rgba(255,165,0,0.3);border-radius:14px;text-align:center;';
+                        cardBox.innerHTML = `<div style="font-size:11px;color:#f0c040;margin-bottom:8px;opacity:0.8;">💸 شماره کارت ${championName} برای واریز ۳۰۰,۰۰۰ تومان</div><div style="font-size:18px;font-weight:900;color:#ffffff;letter-spacing:2px;direction:ltr;">${champData.card_number}</div>`;
+                        const btn = document.getElementById('claimRewardBtn');
+                        if (btn && btn.parentNode) btn.parentNode.insertBefore(cardBox, btn.nextSibling);
+                    }
+                    showFloatingToast(`💸 طبق تعهد، شما باید ۳۰۰,۰۰۰ تومان به حساب ${championName} واریز کنید.`, "warning");
                 } else {
                     showFloatingToast(`🏆 قهرمان مسابقات ${championName} است. شما چون وارد چالش مالی نشده بودید، تعهدی ندارید.`, "success");
                 }
