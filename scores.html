@@ -918,12 +918,16 @@ function renderGrowthChart() {
     const baseColW = Math.max(44, Math.min(80, Math.floor(330/Math.min(n,8))));
     const colW = Math.round(baseColW * _zoom.growth);
     const axisW = 32;
-    const C = makeSvgBase({id:'growth', n, colW, height:260, botPad:44});
 
     // بیشینه امتیاز
     let maxY=10;
     _chartUsers.forEach(u=>{ const d=_seriesByDay[u.username]; if(d&&d.length) maxY=Math.max(maxY,d[d.length-1]); });
     maxY=Math.ceil(maxY/10)*10;
+
+    // ارتفاع داینامیک: هر ۱۰ امتیاز = ۲۴px، حداقل ۲۶۰، حداکثر ۸۰۰
+    const dynamicHeight = Math.min(800, Math.max(260, Math.ceil(maxY / 10) * 24 + 80));
+    const C = makeSvgBase({id:'growth', n, colW, height:dynamicHeight, botPad:44});
+
     const yFor = v => C.topPad + C.chartH - (v/maxY)*C.chartH;
 
     const ticks = [];
@@ -931,6 +935,11 @@ function renderGrowthChart() {
         ticks.push({ y: yFor(v), label: v, color:'rgba(255,255,255,0.4)' });
     }
     const yAxis = renderYAxisHTML(axisW, C.height, ticks);
+
+    // wrapper عمودی اسکرول‌پذیر برای نمودار growth
+    const wrapperStyle = dynamicHeight > 300
+        ? `style="max-height:320px;overflow-y:auto;overflow-x:auto;"`
+        : '';
 
     // گرید Y هر ۱۰ تا
     let svg = C.open;
@@ -969,6 +978,18 @@ function renderGrowthChart() {
         });
     });
     svg+=`</svg>`;
+
+    // اگر نمودار بلند است، در یک div با اسکرول عمودی wrap کن
+    if (dynamicHeight > 300) {
+        // yAxis چسبان + SVG اصلی با اسکرول عمودی
+        return `<div style="display:flex;align-items:flex-start;width:100%;">` +
+               `<div style="position:sticky;left:0;z-index:2;flex-shrink:0;background:var(--card);max-height:320px;overflow:hidden;">` +
+               yAxis +
+               `</div>` +
+               `<div style="overflow-y:auto;overflow-x:auto;max-height:320px;flex:1;">` +
+               svg +
+               `</div></div>`;
+    }
     return yAxis + svg;
 }
 

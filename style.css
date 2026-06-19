@@ -415,8 +415,6 @@ body.login-page {
     transition: all 0.18s !important;
     white-space: nowrap;
     letter-spacing: 0.2px;
-    text-align: left !important;
-    direction: ltr;
 }
 .btn-results-nav:hover {
     background: rgba(255,45,110,0.16) !important;
@@ -576,9 +574,6 @@ input[type="date"]:focus, input[type="time"]:focus {
     text-overflow: ellipsis !important;
 }
 
-/* ═══════════════════════════════════════════
-   همه دکمه‌ها چپ‌چین
-═══════════════════════════════════════════ */
 button {
     border: none;
     border-radius: var(--r-sm);
@@ -588,8 +583,6 @@ button {
     cursor: pointer;
     font-size: 13px;
     transition: all 0.18s;
-    text-align: left;
-    direction: ltr;
 }
 
 .btn-primary {

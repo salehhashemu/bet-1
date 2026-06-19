@@ -963,9 +963,22 @@ window.editMatchDateTime = (matchId, currentDate, currentTime) => {
             </div>
         `;
         document.body.appendChild(modal);
-        modal.querySelector('#edtCloseBtn').addEventListener('click', () => { modal.style.display = 'none'; });
-        modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+
+        const closeModal = () => {
+            modal.style.display = 'none';
+            // ریست کامل دکمه ذخیره
+            const btn = document.getElementById('edtSaveBtn');
+            if (btn) { btn.disabled = false; btn.innerHTML = '💾 ذخیره'; }
+            modal.dataset.matchId = '';
+        };
+
+        modal.querySelector('#edtCloseBtn').addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
     }
+
+    // ریست دکمه ذخیره قبل از هر بار باز کردن
+    const btn = document.getElementById('edtSaveBtn');
+    if (btn) { btn.disabled = false; btn.innerHTML = '💾 ذخیره'; }
 
     modal.dataset.matchId = matchId;
     document.getElementById('edtDateInput').value = currentDate || '';
@@ -977,6 +990,7 @@ window.saveMatchDateTime = async () => {
     const modal = document.getElementById('editDateTimeModal');
     if (!modal) return;
     const matchId = modal.dataset.matchId;
+    if (!matchId) return;
     const newDate = document.getElementById('edtDateInput').value;
     const newTime = document.getElementById('edtTimeInput').value;
 
@@ -992,6 +1006,9 @@ window.saveMatchDateTime = async () => {
             .eq('id', matchId);
         if (error) throw error;
         modal.style.display = 'none';
+        modal.dataset.matchId = '';
+        btn.disabled = false;
+        btn.innerHTML = '💾 ذخیره';
         showFloatingToast('✅ تاریخ و ساعت بازی با موفقیت ذخیره شد.', 'success');
         fetchAndRenderContent();
     } catch (err) {

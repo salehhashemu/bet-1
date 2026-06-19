@@ -79,7 +79,7 @@
 
         .lb-left { display: flex; align-items: center; gap: 12px; }
         .lb-meta { display: flex; flex-direction: column; gap: 2px; }
-        .lb-name { font-size: 7px; font-weight: 600; color: var(--text-1); }
+        .lb-name { font-size: 17px; font-weight: 600; color: var(--text-1); }
         .lb-name.is-me { color: var(--gold); }
         .lb-sub  { font-size: 11px; color: var(--text-3); }
         .lb-score { font-size: 16px; font-weight: 700; color: var(--pink); }
@@ -401,7 +401,7 @@
                 var rank = i + 1;
                 var rc = rank <= 3 ? 'rank-' + rank : '';
                 var isMe = item.username === curUser;
-                var badge = premiumSet.has(item.username) ? '<span class="premium-badge">💎 چالش</span>' : '';
+                var badge = premiumSet.has(item.username) ? '<span class="premium-badge">چالش</span>' : '';
                 var prevRank = prevRanks[item.username];
                 var diff = prevRank !== undefined ? prevRank - rank : 0;
                 var arrow = '', cls = '';
@@ -735,7 +735,7 @@
                                     '<div class="lb-meta">' +
                                         '<span class="lb-name' + (isMe ? ' is-me' : '') + '" style="display:flex;align-items:center;gap:4px;">' +
                                             item.username +
-                                            ' <span class="premium-badge">💎 چالش</span>' +
+                                            ' <span class="premium-badge">چالش</span>' +
                                         '</span>' +
                                         '<span class="lb-sub">' + item.predCount + ' از ' + totalMatchesCount + ' پیش‌بینی</span>' +
                                     '</div>' +
