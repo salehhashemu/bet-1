@@ -230,7 +230,7 @@
         <header class="app-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;direction:ltr;">
             <div style="display:flex;gap:6px;align-items:center;">
                 <button onclick="window.location.href='dashboard.html'" class="btn-results-nav" dir="rtl">← بازگشت</button>
-                <button id="backupBtn" class="btn-results-nav" style="background:linear-gradient(135deg,rgba(52,211,153,0.15),rgba(52,211,153,0.08)) !important;border-color:rgba(52,211,153,0.25) !important;color:#34d399 !important;"><span dir="rtl">📥 بکاپ</span></button>
+                <button id="backupBtn" class="btn-results-nav" style="display:none;background:linear-gradient(135deg,rgba(52,211,153,0.15),rgba(52,211,153,0.08)) !important;border-color:rgba(52,211,153,0.25) !important;color:#34d399 !important;"><span dir="rtl">📥 بکاپ</span></button>
             </div>
             <h1 style="color:var(--gold);">جدول نتایج</h1>
         </header>
@@ -249,13 +249,10 @@
                 <!-- انتخاب‌گر رتبه‌بندی بر اساس بازی -->
                 <div id="matchRankingSelector" style="margin-bottom:14px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:14px;padding:12px 14px;">
                     <div style="font-size:12px;font-weight:800;color:var(--text-primary);margin-bottom:10px;">🎯 رتبه‌بندی بر اساس بازی</div>
-                    <div id="matchRankingBtns" style="display:flex;flex-wrap:wrap;gap:6px;">
-                        <button id="btnRankAll" class="match-rank-btn active" onclick="showMatchRanking('all')"
-                            style="padding:6px 14px;border-radius:20px;border:1px solid rgba(99,133,255,0.4);background:rgba(99,133,255,0.15);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all 0.15s;">
-                            🏆 رتبه‌بندی کل
-                        </button>
-                        <div id="perMatchBtns" style="display:contents;"></div>
-                    </div>
+                    <select id="matchRankingSelect" onchange="showMatchRanking(this.value)"
+                        style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(99,133,255,0.4);background:rgba(99,133,255,0.10);color:var(--text-primary);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;direction:rtl;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236385ff%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><polyline points=%226 9 12 15 18 9%22/></svg>');background-repeat:no-repeat;background-position:left 14px center;padding-left:36px;">
+                        <option value="all">🏆 رتبه‌بندی کل</option>
+                    </select>
                 </div>
                 <div id="leaderboardContainer">
                     <div style="text-align:center; padding:40px 0; color:var(--text-muted); font-size:13px;">
@@ -307,9 +304,8 @@
         window._rankingData = null;
 
         window.showMatchRanking = function(matchId) {
-            document.querySelectorAll('.match-rank-btn').forEach(function(b) { b.classList.remove('active'); });
-            var btn = document.getElementById(matchId === 'all' ? 'btnRankAll' : 'btnRankM' + matchId);
-            if (btn) btn.classList.add('active');
+            var sel = document.getElementById('matchRankingSelect');
+            if (sel && sel.value !== String(matchId)) sel.value = String(matchId);
 
             var lbEl = document.getElementById('leaderboardContainer');
             var d = window._rankingData;
@@ -487,13 +483,13 @@
                 var allPredictions = results[4].data || [];
                 // زمان سرور برای مقایسه با زمان بازی‌ها (به وقت تهران UTC+3:30)
                 var serverNowMs = results[5].data ? new Date(results[5].data).getTime() : Date.now();
-                var tehranOffsetMs = 3.5 * 60 * 60 * 1000;
 
                 // آیا زمان یک بازی (به وقت تهران) فرا رسیده؟
                 function isMatchStarted(match) {
                     if (!match.match_date || !match.match_time) return true; // بدون تاریخ = نمایش
-                    var matchLocalMs = new Date(match.match_date + 'T' + match.match_time).getTime();
-                    var matchUTC = matchLocalMs - tehranOffsetMs;
+                    // تفسیر تاریخ/ساعت ذخیره‌شده به‌عنوان وقت تهران (+03:30) — مستقل از تایم‌زون مرورگر
+                    var t = String(match.match_time).length === 5 ? match.match_time + ':00' : match.match_time;
+                    var matchUTC = new Date(match.match_date + 'T' + t + '+03:30').getTime();
                     return serverNowMs >= matchUTC;
                 }
 
@@ -660,20 +656,23 @@
                     scoreIdx: scoreIdx
                 };
 
-                // ─── ساخت دکمه‌های رتبه‌بندی بازی ───
-                var perMatchBtns = document.getElementById('perMatchBtns');
-                if (perMatchBtns) {
-                    perMatchBtns.innerHTML = '';
+                // ─── ساخت آپشن‌های کشویی رتبه‌بندی بازی ───
+                var rankSelect = document.getElementById('matchRankingSelect');
+                if (rankSelect) {
+                    // حفظ مقدار انتخاب‌شده فعلی
+                    var prevVal = rankSelect.value || 'all';
+                    rankSelect.innerHTML = '<option value="all">🏆 رتبه‌بندی کل</option>';
                     var settledForBtns = matches.filter(function(m) { return m.home_score !== null && m.away_score !== null; });
                     settledForBtns.forEach(function(m, idx) {
-                        var btn = document.createElement('button');
-                        btn.id = 'btnRankM' + m.id;
-                        btn.className = 'match-rank-btn';
-                        btn.style.cssText = 'padding:5px 13px;border-radius:20px;border:1px solid var(--border-subtle);background:var(--bg-elevated);color:var(--text-muted);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;';
-                        btn.textContent = 'بازی ' + (idx + 1);
-                        btn.setAttribute('onclick', 'showMatchRanking("' + m.id + '")');
-                        perMatchBtns.appendChild(btn);
+                        var opt = document.createElement('option');
+                        opt.value = m.id;
+                        opt.textContent = 'بازی ' + (idx + 1);
+                        rankSelect.appendChild(opt);
                     });
+                    // اگر مقدار قبلی هنوز معتبر است، حفظش کن
+                    if (Array.prototype.some.call(rankSelect.options, function(o){return o.value===prevVal;})) {
+                        rankSelect.value = prevVal;
+                    }
                 }
 
                 // ─── رتبه‌بندی اصلی ───
@@ -978,10 +977,14 @@
             initResultsPage();
         }
 
-        // ─── بکاپ اکسل ───
+        // ─── بکاپ اکسل (فقط برای ادمین) ───
         document.addEventListener('DOMContentLoaded', function() {
             var btn = document.getElementById('backupBtn');
-            if (btn) btn.addEventListener('click', exportToExcel);
+            var role = localStorage.getItem('userRole') || 'user';
+            if (btn && role === 'admin') {
+                btn.style.display = '';
+                btn.addEventListener('click', exportToExcel);
+            }
         });
 
         async function exportToExcel() {

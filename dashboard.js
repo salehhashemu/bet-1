@@ -54,13 +54,18 @@ async function getServerTime() {
     return new Date();
 }
 
+// تابع کمکی: تبدیل تاریخ/ساعت ذخیره‌شده (به وقت تهران) به Date در UTC
+// — مستقل از تایم‌زون مرورگر کاربر
+function tehranToUTC(match_date, match_time) {
+    if (!match_date || !match_time) return null;
+    const t = String(match_time).length === 5 ? `${match_time}:00` : match_time;
+    return new Date(`${match_date}T${t}+03:30`);
+}
+
 // تابع کمکی: آیا زمان مسابقه گذشته؟ (زمان بازی به وقت تهران UTC+3:30)
 async function isMatchTimeExpired(match_date, match_time) {
     if (!match_date || !match_time) return false;
-    // زمان بازی به وقت تهران است — تبدیل به UTC: منهای ۳:۳۰
-    const tehranOffsetMs = 3.5 * 60 * 60 * 1000;
-    const matchLocalMs = new Date(`${match_date}T${match_time}`).getTime();
-    const matchUTC = new Date(matchLocalMs - tehranOffsetMs);
+    const matchUTC = tehranToUTC(match_date, match_time);
     const serverNow = await getServerTime();
     return serverNow >= matchUTC;
 }
@@ -700,10 +705,8 @@ async function fetchAndRenderContent() {
 
                 let isTimeExpired = false;
                 if (match.match_date && match.match_time) {
-                    // زمان بازی به وقت تهران (UTC+3:30) — تبدیل به UTC برای مقایسه
-                    const tehranOffsetMs = 3.5 * 60 * 60 * 1000;
-                    const matchLocalMs = new Date(`${match.match_date}T${match.match_time}`).getTime();
-                    const matchUTC = new Date(matchLocalMs - tehranOffsetMs);
+                    // زمان بازی به وقت تهران (UTC+3:30) — تفسیر صحیح مستقل از تایم‌زون مرورگر
+                    const matchUTC = tehranToUTC(match.match_date, match.match_time);
                     if (serverNow >= matchUTC) { isTimeExpired = true; }
                 }
 
@@ -1016,10 +1019,8 @@ window.saveUserPrediction = async (matchId) => {
     }
 
     if (match.match_date && match.match_time) {
-        // زمان بازی به وقت تهران (UTC+3:30) — تبدیل درست به UTC
-        const tehranOffsetMs = 3.5 * 60 * 60 * 1000;
-        const matchLocalMs = new Date(`${match.match_date}T${match.match_time}`).getTime();
-        const matchUTC = new Date(matchLocalMs - tehranOffsetMs);
+        // زمان بازی به وقت تهران (UTC+3:30) — تفسیر صحیح مستقل از تایم‌زون مرورگر
+        const matchUTC = tehranToUTC(match.match_date, match.match_time);
         const serverNow = await getServerTime();
         if (serverNow >= matchUTC) {
             alert("❌ متأسفانه زمان پیش‌بینی این مسابقه به پایان رسیده است!");
@@ -1118,12 +1119,10 @@ window.saveFolderPredictions = async (folderId) => {
         const homeVal = input.value.trim();
         const awayVal = awayInput ? awayInput.value.trim() : '';
 
-        // بررسی زمان — با offset تهران (UTC+3:30)
+        // بررسی زمان — به وقت تهران (UTC+3:30)
         const matchInfo = allMatchesInFolder?.find(m => String(m.id) === String(matchId));
         if (matchInfo && matchInfo.match_date && matchInfo.match_time) {
-            const tehranOffsetMs = 3.5 * 60 * 60 * 1000;
-            const matchLocalMs = new Date(`${matchInfo.match_date}T${matchInfo.match_time}`).getTime();
-            const matchUTC = new Date(matchLocalMs - tehranOffsetMs);
+            const matchUTC = tehranToUTC(matchInfo.match_date, matchInfo.match_time);
             if (serverNow >= matchUTC) continue; // قفل شده، رد کن
         }
 
