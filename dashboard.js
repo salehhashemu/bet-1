@@ -631,7 +631,7 @@ async function fetchAndRenderContent() {
             folderMatches.forEach(m => {
                 if (m.home_score === null || m.away_score === null) return;
                 hasSettled = true;
-                const pred = userPredictions?.find(p => p.match_id === m.id);
+                const pred = userPredictions?.find(p => String(p.match_id) === String(m.id));
                 if (!pred || pred.home_prediction === null || pred.away_prediction === null ||
                     pred.home_prediction === '' || pred.away_prediction === '') return;
                 const prH = parseInt(pred.home_prediction), prA = parseInt(pred.away_prediction);
@@ -696,7 +696,7 @@ async function fetchAndRenderContent() {
                 matchRow.dataset.folderId = folder.id;
                 matchRow.dataset.settled = (match.home_score !== null && match.away_score !== null) ? '1' : '0';
 
-                const foundPred = userPredictions?.find(p => p.match_id === match.id);
+                const foundPred = userPredictions?.find(p => String(p.match_id) === String(match.id));
                 const hasPrediction = foundPred !== undefined && foundPred !== null;
                 const predHome = hasPrediction ? foundPred.home_prediction : '';
                 const predAway = hasPrediction ? foundPred.away_prediction : '';
