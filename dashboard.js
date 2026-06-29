@@ -2,7 +2,7 @@
 // تنظیمات مرکزی پروژه
 // ==========================================
 const SUPABASE_URL = "https://rzvuvrfrkbsthzzimbce.supabase.co";
-const SUPABASE_KEY = "sb_publishable_La0ndqo_3bHPHl-HKXtkBw_aZ74Kip2";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6dnV2cmZya2JzdGh6emltYmNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NzIxOTEsImV4cCI6MjA5NjI0ODE5MX0.M7db1b124sf9T6-NBewgVPqix1koaytYG-5lJqNnXn8";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ==========================================
