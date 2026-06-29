@@ -51,7 +51,8 @@ async function getServerTime() {
     }
 
     // fallback به زمان محلی اگر سرور جواب نداد
-    return new Date();
+    // null برمی‌گردانیم تا تابع‌های صدازننده بدانند زمان قابل اطمینان نیست
+    return null;
 }
 
 // تابع کمکی: تبدیل تاریخ/ساعت ذخیره‌شده (به وقت تهران) به Date در UTC
@@ -67,6 +68,8 @@ async function isMatchTimeExpired(match_date, match_time) {
     if (!match_date || !match_time) return false;
     const matchUTC = tehranToUTC(match_date, match_time);
     const serverNow = await getServerTime();
+    // اگر زمان سرور در دسترس نبود، به نفع کاربر عمل کن (اجازه ثبت بده)
+    if (!serverNow) return false;
     return serverNow >= matchUTC;
 }
 
@@ -705,7 +708,7 @@ async function fetchAndRenderContent() {
                 const realAway = match.away_score !== null ? match.away_score : '-';
 
                 let isTimeExpired = false;
-                if (match.match_date && match.match_time) {
+                if (match.match_date && match.match_time && serverNow) {
                     // زمان بازی به وقت تهران (UTC+3:30) — تفسیر صحیح مستقل از تایم‌زون مرورگر
                     const matchUTC = tehranToUTC(match.match_date, match.match_time);
                     if (serverNow >= matchUTC) { isTimeExpired = true; }
@@ -1039,7 +1042,8 @@ window.saveUserPrediction = async (matchId) => {
         // زمان بازی به وقت تهران (UTC+3:30) — تفسیر صحیح مستقل از تایم‌زون مرورگر
         const matchUTC = tehranToUTC(match.match_date, match.match_time);
         const serverNow = await getServerTime();
-        if (serverNow >= matchUTC) {
+        // فقط اگر زمان سرور در دسترس بود چک کن — در غیر این صورت به نفع کاربر عمل کن
+        if (serverNow && serverNow >= matchUTC) {
             alert("❌ متأسفانه زمان پیش‌بینی این مسابقه به پایان رسیده است!");
             fetchAndRenderContent();
             return;
@@ -1140,7 +1144,7 @@ window.saveFolderPredictions = async (folderId) => {
 
         // بررسی زمان — به وقت تهران (UTC+3:30)
         const matchInfo = allMatchesInFolder?.find(m => String(m.id) === String(matchId));
-        if (matchInfo && matchInfo.match_date && matchInfo.match_time) {
+        if (matchInfo && matchInfo.match_date && matchInfo.match_time && serverNow) {
             const matchUTC = tehranToUTC(matchInfo.match_date, matchInfo.match_time);
             if (serverNow >= matchUTC) continue; // قفل شده، رد کن
         }
