@@ -482,17 +482,58 @@
             if (usEl) usEl.innerHTML = loadingHtml;
 
             try {
-                var results = await Promise.all([
+                // ── ابتدا داده‌های پایه را از Supabase بگیر ──
+                var baseResults = await Promise.all([
                     supabaseClient.from('project_users').select('username, is_eligible_for_reward'),
                     supabaseClient.from('matches').select('*').order('id', { ascending: true }),
                     supabaseClient.from('teams').select('*'),
                     supabaseClient.from('folders').select('*').order('id', { ascending: true }),
-                    supabaseClient.from('predictions').select('*'),
                     supabaseClient.rpc('get_server_time')
                 ]);
 
+                for (var qi = 0; qi < baseResults.length - 1; qi++) {
+                    if (baseResults[qi].error) throw new Error('DB error: ' + baseResults[qi].error.message);
+                }
+
+                // ── پیش‌بینی‌ها: اول از کش داشبورد، سپس از Supabase ──
+                var cachedPreds = null;
+                var cacheRaw = localStorage.getItem('dashboardPredictionsCache');
+                if (cacheRaw) {
+                    try {
+                        var cacheObj = JSON.parse(cacheRaw);
+                        // کش معتبر اگر کمتر از ۵ دقیقه پیش ذخیره شده باشد
+                        if (cacheObj && cacheObj.ts && (Date.now() - cacheObj.ts) < 5 * 60 * 1000 && Array.isArray(cacheObj.data)) {
+                            cachedPreds = cacheObj.data;
+                        }
+                    } catch(e) { cachedPreds = null; }
+                }
+
+                var predResult;
+                if (cachedPreds) {
+                    predResult = { data: cachedPreds, error: null };
+                } else {
+                    predResult = await supabaseClient.from('predictions').select('*');
+                    // ذخیره در کش برای دفعات بعدی
+                    if (!predResult.error && predResult.data) {
+                        try {
+                            localStorage.setItem('dashboardPredictionsCache', JSON.stringify({ ts: Date.now(), data: predResult.data }));
+                        } catch(e) {}
+                    }
+                }
+
+                if (predResult.error) throw new Error('DB error (predictions): ' + predResult.error.message);
+
+                var results = [
+                    baseResults[0],
+                    baseResults[1],
+                    baseResults[2],
+                    baseResults[3],
+                    predResult,
+                    baseResults[4]
+                ];
+
                 for (var qi = 0; qi < results.length; qi++) {
-                    if (results[qi].error) throw new Error('DB error: ' + results[qi].error.message);
+                    if (results[qi] && results[qi].error) throw new Error('DB error: ' + results[qi].error.message);
                 }
 
                 var users         = results[0].data || [];

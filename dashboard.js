@@ -1077,6 +1077,8 @@ window.saveUserPrediction = async (matchId) => {
     }
 
     if (!result.error) {
+        // پاک کردن کش تا در صفحه نتایج داده تازه لود شود
+        try { localStorage.removeItem('dashboardPredictionsCache'); } catch(e) {}
         alert("پیش‌بینی شما با موفقیت ثبت شد.");
         fetchAndRenderContent();
     } else {
@@ -1184,9 +1186,11 @@ window.saveFolderPredictions = async (folderId) => {
     }
 
     if (successCount > 0 && errors.length === 0) {
+        try { localStorage.removeItem('dashboardPredictionsCache'); } catch(e) {}
         showFloatingToast(`✅ ${successCount} پیش‌بینی با موفقیت ثبت شد.`, "success");
         fetchAndRenderContent();
     } else if (successCount > 0 && errors.length > 0) {
+        try { localStorage.removeItem('dashboardPredictionsCache'); } catch(e) {}
         showFloatingToast(`✅ ${successCount} پیش‌بینی ثبت شد.\n${errors.join('\n')}`, "warning");
         fetchAndRenderContent();
     } else if (successCount === 0 && errors.length > 0) {
@@ -1319,6 +1323,7 @@ window.saveAdminPredEdit = async (matchId, username, hasPred) => {
         }
     }
     if (!result.error) {
+        try { localStorage.removeItem('dashboardPredictionsCache'); } catch(e) {}
         showFloatingToast(`✅ پیش‌بینی ${username} ثبت شد.`, 'success');
     } else {
         showFloatingToast('خطا: ' + result.error.message, 'warning');
