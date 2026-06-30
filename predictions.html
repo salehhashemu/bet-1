@@ -487,7 +487,7 @@
                     supabaseClient.from('matches').select('*').order('id', { ascending: true }),
                     supabaseClient.from('teams').select('*'),
                     supabaseClient.from('folders').select('*').order('id', { ascending: true }),
-                    supabaseClient.from('predictions').select('*'),
+                    supabaseClient.from('predictions').select('*').limit(10000),
                     supabaseClient.rpc('get_server_time')
                 ]);
 
@@ -906,9 +906,6 @@
 
                                 folderMatches.forEach(function(match) {
                                     var pred = userPreds.find(function(p) { return String(p.match_id) === String(match.id); });
-                                    // ── DEBUG ──
-                                    console.log('[DEBUG] match.id=' + match.id + ' | user=' + u.username + ' | pred=' + JSON.stringify(pred) + ' | allPreds_for_user=' + userPreds.length);
-                                    // ──────────
                                     var homeName = teamsMap[match.team_home_id] || '—';
                                     var awayName = teamsMap[match.team_away_id] || '—';
                                     var realH = (match.home_score !== null && match.home_score !== undefined) ? match.home_score : '—';
@@ -1019,7 +1016,7 @@
                     supabaseClient.from('matches').select('*').order('id', {ascending: true}),
                     supabaseClient.from('teams').select('*'),
                     supabaseClient.from('folders').select('*').order('id', {ascending: true}),
-                    supabaseClient.from('predictions').select('*')
+                    supabaseClient.from('predictions').select('*').limit(10000)
                 ]);
 
                 var users        = results[0].data || [];

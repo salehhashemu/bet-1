@@ -51,8 +51,7 @@ async function getServerTime() {
     }
 
     // fallback به زمان محلی اگر سرور جواب نداد
-    // null برمی‌گردانیم تا تابع‌های صدازننده بدانند زمان قابل اطمینان نیست
-    return null;
+    return new Date();
 }
 
 // تابع کمکی: تبدیل تاریخ/ساعت ذخیره‌شده (به وقت تهران) به Date در UTC
@@ -68,8 +67,6 @@ async function isMatchTimeExpired(match_date, match_time) {
     if (!match_date || !match_time) return false;
     const matchUTC = tehranToUTC(match_date, match_time);
     const serverNow = await getServerTime();
-    // اگر زمان سرور در دسترس نبود، به نفع کاربر عمل کن (اجازه ثبت بده)
-    if (!serverNow) return false;
     return serverNow >= matchUTC;
 }
 
@@ -634,7 +631,7 @@ async function fetchAndRenderContent() {
             folderMatches.forEach(m => {
                 if (m.home_score === null || m.away_score === null) return;
                 hasSettled = true;
-                const pred = userPredictions?.find(p => String(p.match_id) === String(m.id));
+                const pred = userPredictions?.find(p => p.match_id === m.id);
                 if (!pred || pred.home_prediction === null || pred.away_prediction === null ||
                     pred.home_prediction === '' || pred.away_prediction === '') return;
                 const prH = parseInt(pred.home_prediction), prA = parseInt(pred.away_prediction);
@@ -699,7 +696,7 @@ async function fetchAndRenderContent() {
                 matchRow.dataset.folderId = folder.id;
                 matchRow.dataset.settled = (match.home_score !== null && match.away_score !== null) ? '1' : '0';
 
-                const foundPred = userPredictions?.find(p => String(p.match_id) === String(match.id));
+                const foundPred = userPredictions?.find(p => p.match_id === match.id);
                 const hasPrediction = foundPred !== undefined && foundPred !== null;
                 const predHome = hasPrediction ? foundPred.home_prediction : '';
                 const predAway = hasPrediction ? foundPred.away_prediction : '';
@@ -708,7 +705,7 @@ async function fetchAndRenderContent() {
                 const realAway = match.away_score !== null ? match.away_score : '-';
 
                 let isTimeExpired = false;
-                if (match.match_date && match.match_time && serverNow) {
+                if (match.match_date && match.match_time) {
                     // زمان بازی به وقت تهران (UTC+3:30) — تفسیر صحیح مستقل از تایم‌زون مرورگر
                     const matchUTC = tehranToUTC(match.match_date, match.match_time);
                     if (serverNow >= matchUTC) { isTimeExpired = true; }
@@ -1042,8 +1039,7 @@ window.saveUserPrediction = async (matchId) => {
         // زمان بازی به وقت تهران (UTC+3:30) — تفسیر صحیح مستقل از تایم‌زون مرورگر
         const matchUTC = tehranToUTC(match.match_date, match.match_time);
         const serverNow = await getServerTime();
-        // فقط اگر زمان سرور در دسترس بود چک کن — در غیر این صورت به نفع کاربر عمل کن
-        if (serverNow && serverNow >= matchUTC) {
+        if (serverNow >= matchUTC) {
             alert("❌ متأسفانه زمان پیش‌بینی این مسابقه به پایان رسیده است!");
             fetchAndRenderContent();
             return;
@@ -1081,8 +1077,6 @@ window.saveUserPrediction = async (matchId) => {
     }
 
     if (!result.error) {
-        // پاک کردن کش تا در صفحه نتایج داده تازه لود شود
-        try { localStorage.removeItem('dashboardPredictionsCache'); } catch(e) {}
         alert("پیش‌بینی شما با موفقیت ثبت شد.");
         fetchAndRenderContent();
     } else {
@@ -1144,7 +1138,7 @@ window.saveFolderPredictions = async (folderId) => {
 
         // بررسی زمان — به وقت تهران (UTC+3:30)
         const matchInfo = allMatchesInFolder?.find(m => String(m.id) === String(matchId));
-        if (matchInfo && matchInfo.match_date && matchInfo.match_time && serverNow) {
+        if (matchInfo && matchInfo.match_date && matchInfo.match_time) {
             const matchUTC = tehranToUTC(matchInfo.match_date, matchInfo.match_time);
             if (serverNow >= matchUTC) continue; // قفل شده، رد کن
         }
@@ -1190,11 +1184,9 @@ window.saveFolderPredictions = async (folderId) => {
     }
 
     if (successCount > 0 && errors.length === 0) {
-        try { localStorage.removeItem('dashboardPredictionsCache'); } catch(e) {}
         showFloatingToast(`✅ ${successCount} پیش‌بینی با موفقیت ثبت شد.`, "success");
         fetchAndRenderContent();
     } else if (successCount > 0 && errors.length > 0) {
-        try { localStorage.removeItem('dashboardPredictionsCache'); } catch(e) {}
         showFloatingToast(`✅ ${successCount} پیش‌بینی ثبت شد.\n${errors.join('\n')}`, "warning");
         fetchAndRenderContent();
     } else if (successCount === 0 && errors.length > 0) {
@@ -1327,7 +1319,6 @@ window.saveAdminPredEdit = async (matchId, username, hasPred) => {
         }
     }
     if (!result.error) {
-        try { localStorage.removeItem('dashboardPredictionsCache'); } catch(e) {}
         showFloatingToast(`✅ پیش‌بینی ${username} ثبت شد.`, 'success');
     } else {
         showFloatingToast('خطا: ' + result.error.message, 'warning');
@@ -1394,7 +1385,7 @@ window.showMatchPredictions = async (matchId, homeName, awayName) => {
             { data: matchRow,       error: e3 }
         ] = await Promise.all([
             supabaseClient.from('project_users').select('username'),
-            supabaseClient.from('predictions').select('*'),
+            supabaseClient.from('predictions').select('*').limit(10000),
             supabaseClient.from('matches').select('home_score, away_score').eq('id', matchId).single()
         ]);
         if (e1) throw e1; if (e2) throw e2;
@@ -1548,7 +1539,7 @@ async function runDuplicatePredsScan(checkBtn) {
 
     try {
         const [{ data: predictions }, { data: matches }, { data: teams }] = await Promise.all([
-            supabaseClient.from('predictions').select('*').order('id', { ascending: true }),
+            supabaseClient.from('predictions').select('*').order('id', { ascending: true }).limit(10000),
             supabaseClient.from('matches').select('id, team_home_id, team_away_id'),
             supabaseClient.from('teams').select('*')
         ]);
