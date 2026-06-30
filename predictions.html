@@ -414,6 +414,15 @@
                 var pts = lastSettledMatch ? lastMatchPoints[item.username] : undefined;
                 var lastPointsBadge = pts !== undefined ? '<span class="lb-last-points">+' + pts + '</span>' : '';
                 var settledRatio = '<span class="lb-settled-ratio">' + item.settledPredCount + '/' + settledMatchesCount + '</span>';
+                // نشان تعدیل امتیاز دستی (کم/زیاد شده توسط مدیر) — قرمز برای کسر، سبز برای افزایش
+                var adjustBadge = '';
+                if (item.adjustment && item.adjustment !== 0) {
+                    if (item.adjustment < 0) {
+                        adjustBadge = '<span style="color:var(--red,#FF4B6E);font-size:11px;font-weight:700;margin-inline-start:4px;">(' + item.adjustment + ')</span>';
+                    } else {
+                        adjustBadge = '<span style="color:var(--green,#1DE9B6);font-size:11px;font-weight:700;margin-inline-start:4px;">(+' + item.adjustment + ')</span>';
+                    }
+                }
                 var row = document.createElement('div');
                 row.className = 'lb-row' + (isMe ? ' is-me' : '');
                 row.style.animationDelay = (i * 0.04) + 's';
@@ -428,7 +437,7 @@
                     '<div class="lb-right">' +
                         rankChangeBadge +
                         '<div style="display:flex;align-items:center;gap:6px;">' +
-                            '<div class="lb-score">' + item.score + '</div>' +
+                            '<div class="lb-score">' + item.score + adjustBadge + '</div>' +
                             settledRatio + lastPointsBadge +
                         '</div>' +
                     '</div>';
@@ -501,7 +510,8 @@
                     supabaseClient.from('teams').select('*'),
                     supabaseClient.from('folders').select('*').order('id', { ascending: true }),
                     fetchAllPredictions(),
-                    supabaseClient.rpc('get_server_time')
+                    supabaseClient.rpc('get_server_time'),
+                    supabaseClient.from('score_adjustments').select('*')
                 ]);
 
                 for (var qi = 0; qi < results.length; qi++) {
@@ -515,6 +525,10 @@
                 var allPredictions = results[4].data || [];
                 // زمان سرور برای مقایسه با زمان بازی‌ها (به وقت تهران UTC+3:30)
                 var serverNowMs = results[5].data ? new Date(results[5].data).getTime() : Date.now();
+                // تعدیلات امتیاز ادمین (کم/زیاد کردن دستی)
+                var scoreAdjustments = results[6].data || [];
+                var scoreAdjMap = {};
+                scoreAdjustments.forEach(function(a) { scoreAdjMap[a.username] = Number(a.adjustment) || 0; });
 
                 // آیا زمان یک بازی (به وقت تهران) فرا رسیده؟
                 function isMatchStarted(match) {
@@ -636,9 +650,13 @@
                 }
 
                 var leaderboardArray = Object.keys(userScores).map(function(un) {
+                    var baseScore = userScores[un];
+                    var adjustment = scoreAdjMap[un] || 0;
                     return {
                         username: un,
-                        score: userScores[un],
+                        score: baseScore + adjustment,
+                        baseScore: baseScore,
+                        adjustment: adjustment,
                         predCount: userPredictionsCount[un] || 0,
                         settledPredCount: userSettledPredictionsCount[un] || 0
                     };

@@ -20,6 +20,34 @@
         #notifBellBtn:hover {
             background:rgba(255,45,110,0.18);transform:scale(1.06);
         }
+
+        /* ── بخش کم/زیاد کردن امتیاز کاربران ── */
+        .score-adj-row {
+            display:flex; align-items:center; justify-content:space-between; gap:10px;
+            background:rgba(255,255,255,0.03); border:1px solid var(--border-1, rgba(255,255,255,0.08));
+            border-radius:12px; padding:10px 12px; margin-bottom:8px;
+        }
+        .score-adj-info { display:flex; flex-direction:column; gap:2px; min-width:0; flex:1; }
+        .score-adj-name { font-size:13px; font-weight:600; color:var(--text-1,#fff); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .score-adj-score { font-size:12px; color:var(--text-3,#999); display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+        .score-adj-delta-minus { color: var(--red, #FF4B6E); font-weight:700; }
+        .score-adj-delta-plus { color: var(--green, #1DE9B6); font-weight:700; }
+        .score-adj-controls { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+        .score-adj-input {
+            width:56px; padding:6px 4px; text-align:center; border-radius:8px;
+            border:1px solid var(--border-2, rgba(255,255,255,0.15)); background:rgba(255,255,255,0.05);
+            color:var(--text-1,#fff); font-size:13px;
+        }
+        .score-adj-btn {
+            border:none; border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer;
+            font-weight:600; transition:all .15s;
+        }
+        .score-adj-btn-minus { background: var(--red-dim, rgba(255,75,110,0.12)); color: var(--red,#FF4B6E); }
+        .score-adj-btn-minus:hover { background: rgba(255,75,110,0.25); }
+        .score-adj-btn-plus { background: rgba(29,233,182,0.12); color: var(--green,#1DE9B6); }
+        .score-adj-btn-plus:hover { background: rgba(29,233,182,0.25); }
+        .score-adj-btn-reset { background: rgba(255,255,255,0.08); color: var(--text-2,#ccc); }
+        .score-adj-btn-reset:hover { background: rgba(255,255,255,0.16); }
     </style>
 </head>
 <body>
@@ -55,6 +83,16 @@
                     </p>
                     <button id="sendUnpredNotifBtn" class="btn-primary">📣 ارسال اعلان پیش‌بینی‌های ثبت نشده</button>
                     <div id="notifSendResult" style="margin-top:10px;font-size:12px;"></div>
+                </section>
+
+                <section class="card">
+                    <p class="section-title">⚖️ کم/زیاد کردن امتیاز کاربران</p>
+                    <p style="font-size:12px;color:var(--text-3);margin-bottom:12px;line-height:1.7;">
+                        با این بخش می‌توانید از امتیاز اصلی هر کاربر در رتبه‌بندی و چالش کم یا به آن اضافه کنید.
+                        مقدار تعدیل به‌صورت دائمی کنار امتیاز اصلی نمایش داده می‌شود.
+                    </p>
+                    <button id="loadScoreAdjustBtn" class="btn-primary">🔄 دریافت لیست کاربران و امتیازات</button>
+                    <div id="scoreAdjustListWrapper" class="list-wrapper" style="margin-top:14px;"></div>
                 </section>
 
                 <section class="card">

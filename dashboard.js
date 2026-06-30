@@ -5,6 +5,20 @@ const SUPABASE_URL = "https://rzvuvrfrkbsthzzimbce.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6dnV2cmZya2JzdGh6emltYmNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NzIxOTEsImV4cCI6MjA5NjI0ODE5MX0.M7db1b124sf9T6-NBewgVPqix1koaytYG-5lJqNnXn8";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// ─── دریافت همه predictions با pagination (رفع محدودیت ۱۰۰۰ ردیف Supabase) ───
+async function fetchAllPredictionsPaged() {
+    var all = [], from = 0, pageSize = 1000;
+    while (true) {
+        var r = await supabaseClient.from('predictions').select('*').range(from, from + pageSize - 1);
+        if (r.error) return { data: null, error: r.error };
+        if (!r.data || r.data.length === 0) break;
+        all = all.concat(r.data);
+        if (r.data.length < pageSize) break;
+        from += pageSize;
+    }
+    return { data: all, error: null };
+}
+
 // ==========================================
 // جایگزین کردن alert مرورگر با توست زیبا
 // ==========================================
@@ -218,6 +232,187 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 } catch(e) {}
             })();
+        }
+
+        // ==========================================
+        // ⚖️ کم/زیاد کردن امتیاز کاربران (score_adjustments)
+        // ==========================================
+        const loadScoreAdjustBtn = document.getElementById('loadScoreAdjustBtn');
+        const scoreAdjustListWrapper = document.getElementById('scoreAdjustListWrapper');
+
+        // محاسبه امتیاز هر کاربر دقیقاً مثل predictions.html (رتبه‌بندی و چالش)
+        async function computeUserScoresForAdjust() {
+            const [{ data: users }, { data: matches }, predResult] = await Promise.all([
+                supabaseClient.from('project_users').select('username, is_eligible_for_reward'),
+                supabaseClient.from('matches').select('id, home_score, away_score'),
+                fetchAllPredictionsPaged()
+            ]);
+            const allPredictions = predResult.data || [];
+
+            const userScores = {};
+            (users || []).forEach(u => { userScores[u.username] = 0; });
+
+            const SENTINEL_P = '99';
+            const isValidP = p =>
+                p.home_prediction !== null && p.away_prediction !== null &&
+                p.home_prediction !== ''   && p.away_prediction !== ''   &&
+                !(String(p.home_prediction) === SENTINEL_P && String(p.away_prediction) === SENTINEL_P);
+
+            const scoreIdx = {};
+            allPredictions
+                .filter(isValidP)
+                .sort((a, b) => Number(a.id) - Number(b.id))
+                .forEach(pred => {
+                    const key = pred.username + '_' + String(pred.match_id);
+                    if (!scoreIdx[key]) scoreIdx[key] = pred;
+                });
+
+            Object.keys(scoreIdx).forEach(key => {
+                const pred = scoreIdx[key];
+                if (userScores[pred.username] === undefined) return;
+                const match = (matches || []).find(m => String(m.id) === String(pred.match_id));
+                if (!match || match.home_score === null || match.away_score === null) return;
+                const prH = parseInt(pred.home_prediction), prA = parseInt(pred.away_prediction);
+                const reH = parseInt(match.home_score),    reA = parseInt(match.away_score);
+                if (isNaN(prH) || isNaN(prA) || isNaN(reH) || isNaN(reA)) return;
+                const rW = reH > reA ? 1 : reA > reH ? 2 : 0;
+                const pW = prH > prA ? 1 : prA > prH ? 2 : 0;
+                if (prH === reH && prA === reA)               userScores[pred.username] += 10;
+                else if (rW === pW && (reH-reA) === (prH-prA)) userScores[pred.username] += 7;
+                else if (rW === pW)                            userScores[pred.username] += 5;
+                else                                            userScores[pred.username] += 2;
+            });
+
+            return { users: users || [], userScores };
+        }
+
+        async function renderScoreAdjustList() {
+            scoreAdjustListWrapper.innerHTML = '<div style="text-align:center;padding:20px 0;color:var(--text-3);font-size:13px;">در حال بارگذاری...</div>';
+            try {
+                const [{ users, userScores }, { data: adjustments, error: adjErr }] = await Promise.all([
+                    computeUserScoresForAdjust(),
+                    supabaseClient.from('score_adjustments').select('*')
+                ]);
+                if (adjErr) throw adjErr;
+
+                const adjMap = {};
+                (adjustments || []).forEach(a => { adjMap[a.username] = a; });
+
+                // مرتب‌سازی بر اساس امتیاز نزولی، نام تکراری نباشد (project_users خودش یکتاست)
+                const sortedUsers = (users || []).slice().sort((a, b) =>
+                    (userScores[b.username] || 0) - (userScores[a.username] || 0)
+                );
+
+                scoreAdjustListWrapper.innerHTML = '';
+                if (sortedUsers.length === 0) {
+                    scoreAdjustListWrapper.innerHTML = '<p style="text-align:center;color:var(--text-3);font-size:12px;">کاربری یافت نشد.</p>';
+                    return;
+                }
+
+                sortedUsers.forEach(u => {
+                    const baseScore = userScores[u.username] || 0;
+                    const adj = adjMap[u.username];
+                    const delta = adj ? Number(adj.adjustment) || 0 : 0;
+                    const finalScore = baseScore + delta;
+
+                    let deltaHtml = '';
+                    if (delta !== 0) {
+                        if (delta < 0) {
+                            deltaHtml = `<span class="score-adj-delta-minus">(${delta})</span>`;
+                        } else {
+                            deltaHtml = `<span class="score-adj-delta-plus">(+${delta})</span>`;
+                        }
+                    }
+
+                    const row = document.createElement('div');
+                    row.className = 'score-adj-row';
+                    row.innerHTML = `
+                        <div class="score-adj-info">
+                            <span class="score-adj-name">${u.username}</span>
+                            <span class="score-adj-score">
+                                امتیاز: <b>${finalScore}</b>
+                                ${delta !== 0 ? `(اصلی ${baseScore} ${deltaHtml})` : ''}
+                            </span>
+                        </div>
+                        <div class="score-adj-controls">
+                            <input type="number" min="0" class="score-adj-input" id="scoreAdjInput-${cssEscape(u.username)}" placeholder="عدد">
+                            <button class="score-adj-btn score-adj-btn-minus" onclick="applyScoreAdjust('${escapeJs(u.username)}', -1)">➖ کم کن</button>
+                            <button class="score-adj-btn score-adj-btn-plus" onclick="applyScoreAdjust('${escapeJs(u.username)}', 1)">➕ زیاد کن</button>
+                            ${delta !== 0 ? `<button class="score-adj-btn score-adj-btn-reset" onclick="resetScoreAdjust('${escapeJs(u.username)}')">♻️ ریست</button>` : ''}
+                        </div>
+                    `;
+                    scoreAdjustListWrapper.appendChild(row);
+                });
+            } catch (e) {
+                scoreAdjustListWrapper.innerHTML = `<p style="text-align:center;color:var(--red);font-size:12px;">خطا: ${e.message}</p>`;
+            }
+        }
+
+        // کمک: escape برای استفاده در id و onclick
+        function cssEscape(str) {
+            return String(str).replace(/[^a-zA-Z0-9_-]/g, c => '_' + c.charCodeAt(0) + '_');
+        }
+        function escapeJs(str) {
+            return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        }
+
+        // اعمال تغییر (کم/زیاد کردن) — جمع‌شونده با مقدار قبلی
+        window.applyScoreAdjust = async (username, sign) => {
+            const inputEl = document.getElementById(`scoreAdjInput-${cssEscape(username)}`);
+            const rawVal = inputEl ? inputEl.value.trim() : '';
+            const num = parseInt(rawVal, 10);
+            if (!rawVal || isNaN(num) || num <= 0) {
+                showFloatingToast('لطفاً یک عدد مثبت معتبر وارد کنید.', 'warning');
+                return;
+            }
+
+            try {
+                const { data: existing, error: selErr } = await supabaseClient
+                    .from('score_adjustments')
+                    .select('*')
+                    .eq('username', username)
+                    .maybeSingle();
+                if (selErr) throw selErr;
+
+                const currentAdj = existing ? (Number(existing.adjustment) || 0) : 0;
+                const newAdj = currentAdj + (sign * num); // sign=-1 یعنی کم کردن، sign=1 یعنی زیاد کردن
+
+                const { error: upsertErr } = await supabaseClient
+                    .from('score_adjustments')
+                    .upsert({ username, adjustment: newAdj }, { onConflict: 'username' });
+                if (upsertErr) throw upsertErr;
+
+                showFloatingToast(
+                    sign < 0
+                        ? `✅ ${num} امتیاز از ${username} کم شد.`
+                        : `✅ ${num} امتیاز به ${username} اضافه شد.`,
+                    'success'
+                );
+                if (inputEl) inputEl.value = '';
+                renderScoreAdjustList();
+            } catch (e) {
+                showFloatingToast('خطا: ' + e.message, 'warning');
+            }
+        };
+
+        // ریست کامل تعدیل امتیاز یک کاربر
+        window.resetScoreAdjust = async (username) => {
+            if (!confirm(`آیا مطمئن هستید می‌خواهید تعدیل امتیاز "${username}" را کاملاً ریست کنید؟`)) return;
+            try {
+                const { error } = await supabaseClient
+                    .from('score_adjustments')
+                    .delete()
+                    .eq('username', username);
+                if (error) throw error;
+                showFloatingToast(`♻️ تعدیل امتیاز ${username} ریست شد.`, 'success');
+                renderScoreAdjustList();
+            } catch (e) {
+                showFloatingToast('خطا: ' + e.message, 'warning');
+            }
+        };
+
+        if (loadScoreAdjustBtn) {
+            loadScoreAdjustBtn.addEventListener('click', renderScoreAdjustList);
         }
     }
 
