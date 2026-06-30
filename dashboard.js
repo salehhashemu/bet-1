@@ -1385,7 +1385,7 @@ window.showMatchPredictions = async (matchId, homeName, awayName) => {
             { data: matchRow,       error: e3 }
         ] = await Promise.all([
             supabaseClient.from('project_users').select('username'),
-            supabaseClient.from('predictions').select('*').limit(10000),
+            fetchAllPredictionsPaged(),
             supabaseClient.from('matches').select('home_score, away_score').eq('id', matchId).single()
         ]);
         if (e1) throw e1; if (e2) throw e2;
@@ -1539,7 +1539,7 @@ async function runDuplicatePredsScan(checkBtn) {
 
     try {
         const [{ data: predictions }, { data: matches }, { data: teams }] = await Promise.all([
-            supabaseClient.from('predictions').select('*').order('id', { ascending: true }).limit(10000),
+            fetchAllPredictionsPaged(),
             supabaseClient.from('matches').select('id, team_home_id, team_away_id'),
             supabaseClient.from('teams').select('*')
         ]);

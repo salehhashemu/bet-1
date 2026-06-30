@@ -482,12 +482,25 @@
             if (usEl) usEl.innerHTML = loadingHtml;
 
             try {
+                async function fetchAllPredictions() {
+                    var all = [], from = 0, pageSize = 1000;
+                    while (true) {
+                        var r = await supabaseClient.from('predictions').select('*').range(from, from + pageSize - 1);
+                        if (r.error) throw new Error('DB error (predictions): ' + r.error.message);
+                        if (!r.data || r.data.length === 0) break;
+                        all = all.concat(r.data);
+                        if (r.data.length < pageSize) break;
+                        from += pageSize;
+                    }
+                    return { data: all, error: null };
+                }
+
                 var results = await Promise.all([
                     supabaseClient.from('project_users').select('username, is_eligible_for_reward'),
                     supabaseClient.from('matches').select('*').order('id', { ascending: true }),
                     supabaseClient.from('teams').select('*'),
                     supabaseClient.from('folders').select('*').order('id', { ascending: true }),
-                    supabaseClient.from('predictions').select('*').limit(10000),
+                    fetchAllPredictions(),
                     supabaseClient.rpc('get_server_time')
                 ]);
 
@@ -1011,12 +1024,24 @@
             if (btn) { btn.innerHTML = '<span dir="rtl">⏳ در حال دریافت...</span>'; btn.disabled = true; }
 
             try {
+                async function fetchAllPredsExcel() {
+                    var all = [], from = 0, pageSize = 1000;
+                    while (true) {
+                        var r = await supabaseClient.from('predictions').select('*').range(from, from + pageSize - 1);
+                        if (r.error || !r.data || r.data.length === 0) break;
+                        all = all.concat(r.data);
+                        if (r.data.length < pageSize) break;
+                        from += pageSize;
+                    }
+                    return { data: all, error: null };
+                }
+
                 var results = await Promise.all([
                     supabaseClient.from('project_users').select('username').order('username', {ascending: true}),
                     supabaseClient.from('matches').select('*').order('id', {ascending: true}),
                     supabaseClient.from('teams').select('*'),
                     supabaseClient.from('folders').select('*').order('id', {ascending: true}),
-                    supabaseClient.from('predictions').select('*').limit(10000)
+                    fetchAllPredsExcel()
                 ]);
 
                 var users        = results[0].data || [];
